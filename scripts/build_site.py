@@ -1863,7 +1863,7 @@ def generate_html(stats, latest_tracks):
     <footer>
         <p>数据来源：pandadj.com 公开列表 | 仅元数据索引，不存储音频文件 | 共 {stats['total']:,} 首曲目</p>
         <p>试听与下载需注册并登录账号（注册 / 登录后，在本页直接播放、下载）</p>
-        <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 20)} MiB 或含「串烧」关键词为串烧</p>
+        <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 100)} MiB 即为串烧</p>
     </footer>
     <script src="assets/app.js"></script>
 </body>
