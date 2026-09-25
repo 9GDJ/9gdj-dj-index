@@ -1787,7 +1787,7 @@ def generate_html(stats, latest_tracks):
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <script>window.API_BASE = '';</script>
+    <script>window.API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? '' : 'https://ideal-tarantula-8406.9gdj.deno.net';</script>
     <header>
         <div class="header-inner">
             <div class="logo">🎧 9GDJ Index <span>曲目元数据索引</span></div>
