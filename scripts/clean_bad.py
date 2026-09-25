@@ -2,8 +2,9 @@
 """清洗：删除 filename='-' 或 size_mib 缺失/0 的项目（原子写）"""
 import json, io, os, tempfile, time
 
-BASE = r'C:\Users\Administrator\DoubaoWork\chats\2026-09-23\new-chat-1\panda-index-site\data'
-P = BASE + r'\classified.json'
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.join(os.path.dirname(SCRIPT_DIR), 'data')
+P = os.path.join(BASE, 'classified.json')
 
 with io.open(P, 'r', encoding='utf-8') as f:
     tracks = json.load(f)
@@ -26,7 +27,7 @@ os.replace(tmp, P)
 print('classified.json rewritten:', os.path.getsize(P))
 
 # 同步 audio_map.json 清理
-AM = BASE + r'\audio_map.json'
+AM = os.path.join(BASE, 'audio_map.json')
 if os.path.exists(AM):
     with io.open(AM, 'r', encoding='utf-8') as f:
         am = json.load(f)
@@ -41,7 +42,7 @@ if os.path.exists(AM):
 
 # ── 重算 stats.json（清洗后统计口径必须刷新）──
 from collections import Counter
-SP = BASE + r'\stats.json'
+SP = os.path.join(BASE, 'stats.json')
 if os.path.exists(SP):
     with io.open(SP, 'r', encoding='utf-8') as f:
         old = json.load(f)
