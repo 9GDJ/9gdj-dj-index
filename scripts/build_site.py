@@ -78,7 +78,7 @@ def build_dates_list(tracks):
 
 
 def generate_css():
-    return """/* ===== Panda DJ Index — 深色简洁音乐站风格 ===== */
+    return """/* ===== 9GDJ DJ 索引 — 深色简洁音乐站风格 ===== */
 :root {
   --bg: #0f1115;
   --bg-card: #181b21;
@@ -164,16 +164,7 @@ nav a:hover, nav a.active {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.auth-nick {
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-right: 6px;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 .search-box {
   margin-left: auto;
   display: flex;
@@ -852,7 +843,7 @@ footer {
 
 def generate_js(total_tracks, page_size, latest_ids):
     """生成客户端 JS。latest_ids 是首页预载曲目的 id 列表。"""
-    return f"""/* ===== Panda DJ Index — 客户端逻辑 ===== */
+    return f"""/* ===== 9GDJ DJ 索引 — 客户端逻辑 ===== */
 (function() {{
   'use strict';
 
@@ -1443,24 +1434,13 @@ def generate_js(total_tracks, page_size, latest_ids):
   function setAuthed(v, name) {{
     if (v) {{
       localStorage.setItem('panda_auth', '1');
-      if (name) localStorage.setItem('panda_name', name);
     }} else {{
       localStorage.removeItem('panda_auth');
-      localStorage.removeItem('panda_name');
     }}
     refreshAuthUI();
   }}
   function refreshAuthUI() {{
-    const lb = document.getElementById('auth-login');
-    if (lb) lb.textContent = isAuthed() ? '退出' : '登录';
-    const rb = document.getElementById('auth-register');
-    if (rb && isAuthed()) rb.style.display = 'none';
-    if (rb && !isAuthed()) rb.style.display = '';
-    const nk = document.getElementById('auth-nick');
-    if (nk) {{
-      nk.style.display = isAuthed() ? '' : 'none';
-      nk.textContent = isAuthed() ? (localStorage.getItem('panda_name') || '') : '';
-    }}
+    // 昵称显示模块已移除（仅保留自动授权标识）
   }}
 
   // ── 搜索 ──
@@ -1802,15 +1782,15 @@ def generate_html(stats, latest_tracks):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panda DJ 索引 — 单曲 / 串烧 / 中英文分类</title>
-    <meta name="description" content="pandadj.com 公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索和日期归档。仅元数据索引，不存储音频文件。">
+    <title>9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类</title>
+    <meta name="description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索和日期归档。仅元数据索引，不存储音频文件。">
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
     <script>window.API_BASE = '';</script>
     <header>
         <div class="header-inner">
-            <div class="logo">🎧 Panda DJ Index <span>曲目元数据索引</span></div>
+            <div class="logo">🎧 9GDJ Index <span>曲目元数据索引</span></div>
             <nav>
                 <a href="?" id="nav-home">首页</a>
                 <a href="?view=all" id="nav-all">全部曲目</a>
@@ -1819,9 +1799,7 @@ def generate_html(stats, latest_tracks):
                 <a href="?format=mashup">串烧</a>
             </nav>
             <nav style="gap:2px;">
-                <span class="auth-nick" id="auth-nick" style="display:none;"></span>
-                <button type="button" class="auth-entry" id="auth-register">注册</button>
-                <button type="button" class="auth-entry" id="auth-login">登录</button>
+                <span class="auth-entry" style="color:#7cf59c;font-weight:600;" id="auth-auto">🔓 自动授权已开启</span>
             </nav>
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="搜索曲目名...">
@@ -1832,37 +1810,9 @@ def generate_html(stats, latest_tracks):
     <main id="main">
         <div class="loading"><div class="spinner"></div>正在加载曲目数据...</div>
     </main>
-    <div class="auth-overlay" id="auth-overlay">
-        <div class="auth-modal">
-            <div class="auth-head">
-                <div class="t" id="auth-title">注册新账号</div>
-                <button type="button" class="auth-close" id="auth-close" title="关闭">×</button>
-            </div>
-            <div class="auth-tabs">
-                <button type="button" class="auth-tab on" data-tab="register">注册</button>
-                <button type="button" class="auth-tab" data-tab="login">登录</button>
-            </div>
-            <div class="auth-body">
-                <div id="auth-form-register">
-                    <div class="auth-field"><label>用户名</label><input type="text" id="auth-name" placeholder="你的昵称" autocomplete="username"></div>
-                    <div class="auth-field"><label>邮箱</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
-                    <div class="auth-field"><label>密码</label><input type="password" id="auth-pass" placeholder="至少 8 位" autocomplete="new-password"></div>
-                    <div class="auth-field"><label>确认密码</label><input type="password" id="auth-pass2" placeholder="再次输入密码" autocomplete="new-password"></div>
-                    <button type="button" class="auth-submit" id="auth-submit-register">注册</button>
-                    <div class="auth-note" id="auth-note-register">提交后将在本站直接完成注册并自动登录，全程无需跳转。</div>
-                </div>
-                <div id="auth-form-login" style="display:none;">
-                    <div class="auth-field"><label>邮箱</label><input type="email" id="auth-login-email" placeholder="you@example.com" autocomplete="email"></div>
-                    <div class="auth-field"><label>密码</label><input type="password" id="auth-login-pass" placeholder="你的密码" autocomplete="current-password"></div>
-                    <button type="button" class="auth-submit" id="auth-submit-login">登录</button>
-                    <div class="auth-note" id="auth-note-login">提交后将在本站直接完成登录，全程无需跳转。</div>
-                </div>
-            </div>
-        </div>
-    </div>
     <footer>
-        <p>数据来源：pandadj.com 公开列表 | 仅元数据索引，不存储音频文件 | 共 {stats['total']:,} 首曲目</p>
-        <p>试听与下载需注册并登录账号（注册 / 登录后，在本页直接播放、下载）</p>
+        <p>数据来源：互联网 公开列表 | 仅元数据索引，不存储音频文件 | 共 {stats['total']:,} 首曲目</p>
+        <p>打开即可试听、下载（系统自动授权，无需注册登录）</p>
         <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 100)} MiB 即为串烧</p>
     </footer>
     <script src="assets/app.js"></script>
