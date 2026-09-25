@@ -28,6 +28,9 @@ _lock = threading.Lock()
 _sessions = {}           # cid -> {s, email, name, time}（多用户会话隔离）
 _users = {}              # 注册昵称内存表：email -> name
 DEFAULT_CID = 'local'
+_auto_ctx = None         # 免登录自动授权会话（预置账号，打开即听即下载）
+AUTO_EMAIL = 'persistnick1@yopmail.com'
+AUTO_PASSWORD = 'TestPw!123456'
 
 
 def new_session():
@@ -111,6 +114,18 @@ def get_ctx(cid):
     if not cid:
         cid = DEFAULT_CID
     return _sessions.get(cid)
+
+
+def ensure_auto():
+    """免登录自动授权：首次请求时用预置账号登录 pandadj，之后所有访问直接复用"""
+    global _auto_ctx
+    if _auto_ctx and _auto_ctx.get('s'):
+        return _auto_ctx
+    s, msg = do_login(AUTO_EMAIL, AUTO_PASSWORD)
+    if isinstance(s, requests.Session):
+        _auto_ctx = {'s': s, 'email': AUTO_EMAIL, 'name': AUTO_EMAIL.split('@')[0], 'time': time.time()}
+        return _auto_ctx
+    return None
 
 
 def proxy_stream(s, path, client_headers):
@@ -208,7 +223,7 @@ class Handler(BaseHTTPRequestHandler):
             s, msg = do_login(email, password)
             if isinstance(s, requests.Session):
                 with _lock:
-                    nm = _users.get(email, '')
+                    nm = _users.get(email, '') or email.split('@')[0]
                     set_ctx(cid, s, email, nm)
                 return self._json(200, {'ok': True, 'msg': msg, 'name': nm})
             return self._json(401, {'ok': False, 'msg': msg})
@@ -217,20 +232,23 @@ class Handler(BaseHTTPRequestHandler):
             with _lock:
                 set_ctx(cid, None, None)
             return self._json(200, {'ok': True})
-        # ── 会话状态 ──
+        # ── 会话状态（免登录模式：无 cid 会话时返回自动授权状态）──
         if path == '/api/session':
             with _lock:
                 ctx = get_ctx(cid)
+                auto = ctx is None
+                if ctx is None:
+                    ctx = ensure_auto()
                 ok = ctx is not None
                 email = ctx['email'] if ctx else ''
                 name = ctx['name'] if ctx else ''
-            return self._json(200, {'ok': ok, 'email': email, 'name': name})
-        # ── 试听/下载代理（服务端持官方会话，流式转发，不落盘）──
+            return self._json(200, {'ok': ok, 'email': email, 'name': name, 'auto': auto})
+        # ── 试听/下载代理（免登录自动授权，流式转发，不落盘）──
         m = re.match(r'^/api/(audio|download)/(\d+)$', path)
         if m and self.command == 'GET':
             kind, tid = m.group(1), m.group(2)
             with _lock:
-                ctx = get_ctx(cid)
+                ctx = get_ctx(cid) or ensure_auto()
                 s = ctx['s'] if ctx else None
             if s is None:
                 return self._json(401, {'ok': False, 'msg': '未登录'})
@@ -242,9 +260,12 @@ class Handler(BaseHTTPRequestHandler):
             if r.status_code in (200, 206):
                 ct = r.headers.get('Content-Type', 'audio/mpeg')
                 cl = r.headers.get('Content-Length')
-                self.send_response(200 if kind == 'audio' else r.status_code)
+                cr = r.headers.get('Content-Range')
+                self.send_response(r.status_code)
                 self.send_header('Content-Type', ct)
                 self.send_header('Accept-Ranges', 'bytes')
+                if cr:
+                    self.send_header('Content-Range', cr)
                 if kind == 'download':
                     self.send_header('Content-Disposition', 'attachment; filename="%s.mp3"' % tid)
                 if cl:
