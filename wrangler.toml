@@ -1,8 +1,0 @@
-name = "panda-index-backend"
-main = "worker.js"
-compatibility_date = "2026-09-01"
-
-# KV 命名空间（创建后把 id 填到这里）
-[[kv_namespaces]]
-binding = "SESSIONS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
