@@ -9,6 +9,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
+import hashlib
 import requests
 
 SITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site')
@@ -28,9 +29,15 @@ _lock = threading.Lock()
 _sessions = {}           # cid -> {s, email, name, time}（多用户会话隔离）
 _users = {}              # 注册昵称内存表：email -> name
 DEFAULT_CID = 'local'
-_auto_ctx = None         # 免登录自动授权会话（预置账号，打开即听即下载）
+_auto_ctx = None         # 兼容旧引用
+_auto_sessions = {}     # email -> {s, email, name, time} 账号池会话（按账号复用）
 AUTO_EMAIL = 'persistnick1@yopmail.com'
 AUTO_PASSWORD = 'TestPw!123456'
+# 免登录账号池：按访客 IP 哈希分配，多账号分担避免单账号高频触发源站风控
+ACCOUNTS = [
+    {'email': 'persistnick1@yopmail.com', 'password': 'TestPw!123456'},
+    {'email': 'runtimenick1@yopmail.com', 'password': 'TestPw!123456'},
+]
 
 
 def new_session():
@@ -116,15 +123,34 @@ def get_ctx(cid):
     return _sessions.get(cid)
 
 
-def ensure_auto():
-    """免登录自动授权：首次请求时用预置账号登录 pandadj，之后所有访问直接复用"""
-    global _auto_ctx
-    if _auto_ctx and _auto_ctx.get('s'):
-        return _auto_ctx
-    s, msg = do_login(AUTO_EMAIL, AUTO_PASSWORD)
+def get_client_ip(handler):
+    """取访客 IP：优先 X-Forwarded-For（部署在反代/云后），否则直连 IP"""
+    xff = handler.headers.get('X-Forwarded-For')
+    if xff:
+        return xff.split(',')[0].strip()
+    return handler.client_address[0]
+
+
+def pick_account(ip):
+    """按 IP 稳定哈希分配账号（同一 IP 始终同一账号）"""
+    if not ACCOUNTS:
+        return {'email': AUTO_EMAIL, 'password': AUTO_PASSWORD}
+    idx = int(hashlib.md5(ip.encode('utf-8')).hexdigest(), 16) % len(ACCOUNTS)
+    return ACCOUNTS[idx]
+
+
+def ensure_auto(ip=''):
+    """免登录自动授权：按访客 IP 分配账号，首次登录后该账号会话全局复用"""
+    acc = pick_account(ip or DEFAULT_CID)
+    key = acc['email']
+    ctx = _auto_sessions.get(key)
+    if ctx and ctx.get('s'):
+        return ctx
+    s, msg = do_login(acc['email'], acc['password'])
     if isinstance(s, requests.Session):
-        _auto_ctx = {'s': s, 'email': AUTO_EMAIL, 'name': AUTO_EMAIL.split('@')[0], 'time': time.time()}
-        return _auto_ctx
+        ctx = {'s': s, 'email': acc['email'], 'name': acc['email'].split('@')[0], 'time': time.time()}
+        _auto_sessions[key] = ctx
+        return ctx
     return None
 
 
@@ -238,7 +264,7 @@ class Handler(BaseHTTPRequestHandler):
                 ctx = get_ctx(cid)
                 auto = ctx is None
                 if ctx is None:
-                    ctx = ensure_auto()
+                    ctx = ensure_auto(get_client_ip(self))
                 ok = ctx is not None
                 email = ctx['email'] if ctx else ''
                 name = ctx['name'] if ctx else ''
@@ -248,7 +274,7 @@ class Handler(BaseHTTPRequestHandler):
         if m and self.command == 'GET':
             kind, tid = m.group(1), m.group(2)
             with _lock:
-                ctx = get_ctx(cid) or ensure_auto()
+                ctx = get_ctx(cid) or ensure_auto(get_client_ip(self))
                 s = ctx['s'] if ctx else None
             if s is None:
                 return self._json(401, {'ok': False, 'msg': '未登录'})
