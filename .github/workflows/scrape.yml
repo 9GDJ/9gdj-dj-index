@@ -31,7 +31,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install requests
+        run: pip install -r requirements.txt
 
       - name: Scrape new tracks
         run: python scripts/scrape.py
