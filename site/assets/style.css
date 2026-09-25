@@ -1,4 +1,4 @@
-/* ===== Panda DJ Index — 深色简洁音乐站风格 ===== */
+/* ===== 9GDJ DJ 索引 — 深色简洁音乐站风格 ===== */
 :root {
   --bg: #0f1115;
   --bg-card: #181b21;
@@ -84,16 +84,7 @@ nav a:hover, nav a.active {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.auth-nick {
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-right: 6px;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 .search-box {
   margin-left: auto;
   display: flex;

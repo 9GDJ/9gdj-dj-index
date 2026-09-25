@@ -589,10 +589,8 @@
   function setAuthed(v, name) {
     if (v) {
       localStorage.setItem('panda_auth', '1');
-      if (name) localStorage.setItem('panda_name', name);
     } else {
       localStorage.removeItem('panda_auth');
-      localStorage.removeItem('panda_name');
     }
     refreshAuthUI();
   }
@@ -774,16 +772,101 @@
     return {show: show, hide: hide};
   })();
 
-  // ── 注册/登录模块已移除（免登录自动授权）──
-  const auth = null;
+  // ── 注册/登录模态框（白牌） ──
+  const auth = (function() {
+    const overlay = document.getElementById('auth-overlay');
+    if (!overlay) return null;
+    const tabs = overlay.querySelectorAll('.auth-tab');
+    const formReg = document.getElementById('auth-form-register');
+    const formLog = document.getElementById('auth-form-login');
+    const titleEl = document.getElementById('auth-title');
+    function switchTab(mode) {
+      tabs.forEach(t => t.classList.toggle('on', t.dataset.tab === mode));
+      if (formReg) formReg.style.display = mode === 'register' ? '' : 'none';
+      if (formLog) formLog.style.display = mode === 'login' ? '' : 'none';
+      if (titleEl) titleEl.textContent = mode === 'register' ? '注册新账号' : '登录';
+    }
+    function open(mode) {
+      switchTab(mode || 'register');
+      overlay.classList.add('show');
+    }
+    function close() { overlay.classList.remove('show'); }
+    function setNote(id, msg) { const n = document.getElementById(id); if (n) n.textContent = msg; }
+    function busy(btn, on) {
+      if (!btn) return;
+      btn.disabled = on;
+      btn.textContent = on ? '提交中…' : (btn.id === 'auth-submit-register' ? '注册' : '登录');
+    }
+    async function submitRegister() {
+      const name = (document.getElementById('auth-name') || {}).value || '';
+      const email = (document.getElementById('auth-email') || {}).value || '';
+      const pass = (document.getElementById('auth-pass') || {}).value || '';
+      const pass2 = (document.getElementById('auth-pass2') || {}).value || '';
+      if (!name || !email || !pass || !pass2) { setNote('auth-note-register', '请填写完整信息。'); return; }
+      if (pass !== pass2) { setNote('auth-note-register', '两次输入的密码不一致。'); return; }
+      const btn = document.getElementById('auth-submit-register');
+      busy(btn, true);
+      try {
+        const r = await fetch(API + '/api/register', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({name: name, email: email, password: pass})});
+        const d = await r.json();
+        if (d.ok) { setAuthed(true, d.name); close(); toast('注册成功，已自动登录。'); }
+        else setNote('auth-note-register', d.msg || '注册失败，请稍后重试。');
+      } catch (err) { setNote('auth-note-register', '网络异常，请稍后重试。'); }
+      busy(btn, false);
+    }
+    async function submitLogin() {
+      const email = (document.getElementById('auth-login-email') || {}).value || '';
+      const pass = (document.getElementById('auth-login-pass') || {}).value || '';
+      if (!email || !pass) { setNote('auth-note-login', '请填写邮箱和密码。'); return; }
+      const btn = document.getElementById('auth-submit-login');
+      busy(btn, true);
+      try {
+        const r = await fetch(API + '/api/login', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({email: email, password: pass})});
+        const d = await r.json();
+        if (d.ok) { setAuthed(true, d.name); close(); toast('登录成功。'); }
+        else setNote('auth-note-login', d.msg || '登录失败，请稍后重试。');
+      } catch (err) { setNote('auth-note-login', '网络异常，请稍后重试。'); }
+      busy(btn, false);
+    }
+    tabs.forEach(t => t.onclick = () => switchTab(t.dataset.tab));
+    const closeBtn = document.getElementById('auth-close');
+    if (closeBtn) closeBtn.onclick = close;
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    const sr = document.getElementById('auth-submit-register');
+    const sl = document.getElementById('auth-submit-login');
+    if (sr) sr.onclick = submitRegister;
+    if (sl) sl.onclick = submitLogin;
+    return {open: open, close: close};
+  })();
 
-  // 文件名点击：进入详情（免登录自动授权后直接放行）
+  // 页头注册/登录入口
+  document.addEventListener('click', function(e) {
+    const b = e.target.closest ? e.target.closest('.auth-entry') : null;
+    if (b && auth) {
+      e.preventDefault();
+      if (b.id === 'auth-login' && isAuthed()) {
+        try { fetch(API + '/api/logout?cid=' + getCid()); } catch (e) {}
+        setAuthed(false);
+        toast('已退出登录。');
+        return;
+      }
+      auth.open(b.id === 'auth-login' ? 'login' : 'register');
+    }
+  });
+
+  // 文件名点击：未登录不可进入详情（站内底层页）
   document.addEventListener('click', function(e) {
     const a = e.target.closest ? e.target.closest('a.track-name') : null;
     if (a) {
       if (!isAuthed()) {
         e.preventDefault();
-        toast('加载中，请稍候…');
+        if (auth) {
+          auth.open('login');
+          const note = document.getElementById('auth-note-login');
+          if (note) note.textContent = '登录后即可查看曲目详情与完整播放。';
+        }
+        toast('登录后可查看曲目详情。');
       } else {
         e.preventDefault();
         setQuery({id: a.dataset.id});
@@ -802,12 +885,13 @@
     }
   });
 
-  // 下载按钮：免登录自动授权后直接下载（后端自动登录）
+  // 下载按钮：未登录拦截
   document.addEventListener('click', function(e) {
     const a = e.target.closest ? e.target.closest('a.act-download') : null;
     if (a && !isAuthed()) {
       e.preventDefault();
-      toast('下载通道准备中，请稍候…');
+      if (auth) auth.open('login');
+      toast('登录后可下载曲目。');
     }
   });
 
