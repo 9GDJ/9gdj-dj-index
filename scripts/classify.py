@@ -39,15 +39,10 @@ HISTOGRAM_JSON = os.path.join(DATA_DIR, "size_histogram.json")
 
 
 def classify_format(filename, size_mib):
-    """返回 'mashup' 或 'single'。size >= 阈值 或 文件名含「串烧」关键词 → 串烧；否则单曲。"""
+    """返回 'mashup' 或 'single'。仅按大小判定：size >= 阈值(100 MiB) → 串烧；否则单曲（用户定稿规则）。"""
     if size_mib is not None and size_mib >= MASHUP_SIZE_THRESHOLD:
         return "mashup"
-    fn_lower = filename.lower()
-    for kw in MASHUP_KEYWORDS:
-        if kw in fn_lower:
-            return "mashup"
     return "single"
-
 
 def classify_language(filename):
     """精准判定歌曲主体语言：先剥离括号内 DJ 混音/提供者注释，再对歌手/歌名主体判 zh/en/other。"""
