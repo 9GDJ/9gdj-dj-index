@@ -4,7 +4,7 @@
 数据分类脚本：读取 raw_tracks.json，为每条曲目打上分类标签并输出统计。
 
 分类规则（可在 CONFIG 中调整）：
-  - 单曲/串烧：size_mib >= MASHUP_SIZE_THRESHOLD 或文件名含「串烧」关键词 → 串烧；否则单曲
+  - 单曲/串烧：size_mib >= MASHUP_SIZE_THRESHOLD(100 MiB) 或文件名含「串烧」关键词 → 串烧；否则单曲
   - 中文/英文：文件名含中文字符 → 中文；否则含拉丁字母 → 英文；均无 → 其他
   - 日期：从 time 字段提取 YYYY-MM-DD
 
@@ -21,9 +21,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 
 # ── 可配置分类规则 ────────────────────────────────────
-MASHUP_SIZE_THRESHOLD = 20.0  # MiB，大于等于此值视为串烧
-MASHUP_KEYWORDS = ["串烧", "串", "mashup", "mixset", "set mix", "连续", "大碟"]
-# 注意："串" 单独可能误判（如歌名含"串"），实际用更精确的关键词
+MASHUP_SIZE_THRESHOLD = 100.0  # MiB，大于等于此值视为串烧（按用户要求调整）
 MASHUP_KEYWORDS = ["串烧", "mashup", "mash up", "mixset", "megamix", "连续串", "大串烧", "串烧版", "连续播放"]
 
 CHINESE_RE = re.compile(r"[\u4e00-\u9fff]")
@@ -41,7 +39,7 @@ HISTOGRAM_JSON = os.path.join(DATA_DIR, "size_histogram.json")
 
 
 def classify_format(filename, size_mib):
-    """返回 'mashup' 或 'single'。"""
+    """返回 'mashup' 或 'single'。size >= 阈值 或 文件名含「串烧」关键词 → 串烧；否则单曲。"""
     if size_mib is not None and size_mib >= MASHUP_SIZE_THRESHOLD:
         return "mashup"
     fn_lower = filename.lower()
