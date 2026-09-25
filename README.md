@@ -1,91 +1,199 @@
-# Panda DJ Index — GitHub 全自动运行部署（完整方案）
+# 9GDJ DJ Index — pandadj.com 曲目元数据索引站
 
-本包让整个站点**在 GitHub 上自动运行**：前端由 GitHub Pages 托管，后端由 Render 免费托管，
-**每日 10:00 / 22:00 由 GitHub Actions 自动抓取 pandadj 新曲目、更新数据并推送**，全程无需你开电脑。
+纯静态 GitHub Pages 站点，索引 [pandadj.com](https://pandadj.com) 公开列表中的曲目元数据，按**单曲/串烧**、**中文/英文**分类，支持搜索和日期归档。
 
-## 包内结构（一个仓库即可）
+> ⚠️ 本项目仅抓取和展示公开表格中的**元数据**（文件名、大小、入库时间、来源链接），**不下载、不存储、不转存任何 MP3/音频文件**。站内「试听/下载」为**页内直接操作**：音频由来源站 CDN 直连，或由本站后台按需实时转发官方音频流（不缓存、不落盘），访问者需在本站完成注册/登录。
 
-```
-panda-dj-index/
-├── .github/workflows/scrape.yml   # 定时抓取工作流（每天 10:00/22:00 自动跑）
-├── scripts/                       # scrape/classify/clean_bad/build_site 四个脚本
-├── data/                          # 全量数据（92,194 条）+ 断点状态，首次已含
-├── site/                          # 前端静态站（GitHub Pages 指向此目录）
-├── server.py                      # 后端代理（注册/登录/试听/下载）
-├── render.yaml                    # Render 自动部署配置
-├── requirements.txt
-└── users.json
-```
-
-## 一、上线步骤（一次配置，永久自动）
-
-### 1. 创建仓库并推送全部内容
-
-1. 打开 github.com → New repository → 名称如 `panda-dj-index` → 选 Private（推荐）
-2. 把本 zip 解压后的**全部内容**推上去（见文末"推送方式"）
-
-### 2. 开启 GitHub Pages（前端）
-
-仓库 Settings → **Pages** → Source 选 `Deploy from a branch` → 分支 `main` → 目录选 **`/site`** → Save
-→ 约 1 分钟后访问 `https://<你的用户名>.github.io/panda-dj-index/`
-
-### 3. 部署后端（Render，免费）
-
-1. 登录 [render.com](https://render.com) → New → **Blueprint Instance** → 选择刚才的仓库
-2. Render 自动读取 render.yaml 部署 `server.py`，几分钟后得到后端地址 `https://panda-index-backend.onrender.com`
-3. 浏览器打开该地址 `/api/session`，返回 `{"ok": false}` 即后端已运行
-
-### 4. 前端接上后端（关键一步）
-
-1. 打开仓库里的 `site/index.html`（或本地解压目录里改好再推）
-2. 把第一行改成：
-
-   ```html
-   <script>window.API_BASE = 'https://panda-index-backend.onrender.com';</script>
-   ```
-
-3. 推送后 Pages 自动更新，全站注册/登录/试听/下载即打通
-
-### 5. 验证自动抓取
-
-仓库 → **Actions** 页签，能看到 `daily-scrape-update` 工作流已按计划运行（下次 10:00/22:00）；
-也可点 **Run workflow** 手动触发一次验证。每次运行会自动把新数据 commit 并 push，
-Pages 随之自动更新——**这就是"自动运行"**。
-
-## 二、自动运行原理
-
-| 组件 | 角色 | 自动程度 |
-|---|---|---|
-| GitHub Actions | 每天 10:00/22:00 跑 抓取→分类→清洗→重建，自动 commit + push | 全自动 |
-| GitHub Pages | 托管 `site/`，每次 push 自动重新发布 | 全自动 |
-| Render | 持续运行 `server.py` 后端（注册/登录/代理播放/下载） | 持续在线 |
-| 抓取断点 | `data/scrape_state.json` 记录已完成页，只抓新增 | 增量高效 |
-
-## 三、注意事项
-
-- **GitHub Actions 免费额度**：2000 分钟/月。日常每次只抓新增 1-2 页（约 2 分钟），每月约 60 次 ≈ 120 分钟，额度充足
-- **Render 免费实例**：约 15 分钟无访问休眠，首次打开需等几秒唤醒
-- **pandadj 风控**：对高频请求有限制，登录/试听偶发失败稍后重试即可
-- **数据体积**：全量约 69MB，远低于 GitHub 仓库限制（单文件 100MB / 推荐 1GB）
-- **私有仓库**：Pages 支持私有仓库（需登录 GitHub 访问）；对外公开则选 Public
-
-## 四、推送方式（任选）
-
-**方式 1：GitHub Desktop（推荐，图形界面）**
-1. 安装 GitHub Desktop 并登录
-2. File → New repository → 名称 `panda-dj-index` → 选好本地目录后把 zip 内容拷进去
-3. 右上角 Publish repository → 选 Private/Public → 完成
-
-**方式 2：git 命令行**
+## 运行方式（本地全闭环，含后台代理）
 
 ```bash
-git init
-git add -A
-git commit -m "init"
-git branch -M main
-git remote add origin https://github.com/<你的用户名>/panda-dj-index.git
-git push -u origin main
+python server.py        # http://localhost:8765 ：静态站点 + 注册/登录/试听/下载全站内完成
 ```
 
-**方式 3：网页上传**（文件较多需分批，每个 ≤25MB）
-仓库首页 → Add file → Upload files → 拖入 `site/`、`scripts/`、`data/` 等目录内容（注意 GitHub 网页上传不保留子目录结构，多个目录需逐批上传到对应路径）
+- **注册/登录（白牌界面，零跳转）**：模态框表单提交后由本站后台直接调用官方注册/登录接口完成注册并保持会话；成功后本站立即解锁。页面与文案不出现平台名称，也无任何跳转官方界面的链接。
+- **试听**：页内波纹播放器直接播放（不跳转）。有来源直链（`au`）的曲目 → 来源站 CDN 直连；其余 → 本站 `/api/audio/{id}` 后台代理。
+- **下载**：登录后点击「下载」→ 本站 `/api/download/{id}` 代理保存 MP3。
+- **详情页**：登录后点击列表文件名进入站内详情页（文件名/大小/入库时间/标签 + 内嵌波纹播放器）；未登录点击文件名/下载被拦截并提示登录。
+- **部署说明**：GitHub Pages 纯静态无法承载代理层，需自托管运行 `server.py`（或配套 serverless 转发层）才能全闭环；`site/` 目录本身仍可静态部署（无代理场景下试听/下载受限）。
+
+## 数据概览
+
+| 指标 | 数值 |
+|------|------|
+| 抓取页数 | 3,073 页（100% 覆盖） |
+| 去重后曲目数 | **92,141 首**（含 2026-09-24 新增 15 首） |
+| 单曲 | 86,328 |
+| 串烧 | 5,813 |
+| 中文 | 82,016 |
+| 英文 | 8,993 |
+| 其他 | 1,132 |
+| 中文单曲 | 77,173 |
+| 英文单曲 | 8,023 |
+| 中文串烧 | 4,843 |
+| 英文串烧 | 970 |
+| 入库日期范围 | 2024-09-20 ~ 2026-09-24（701 天） |
+| 今日新增（2026-09-24） | 15 首 |
+| 抓取失败页 | 0 |
+
+## 分类规则
+
+### 单曲 / 串烧
+
+**主规则：文件大小 ≥ 20 MiB → 串烧；否则 → 单曲。**
+
+**辅助规则：** 文件名含以下关键词之一也归为串烧（不受大小限制）：
+`串烧`、`mashup`、`mixset`、`连续串`、`大串烧`、`串烧版`
+
+**阈值依据（文件大小分布直方图）：**
+
+| 大小区间 (MiB) | 数量 |
+|----------------|------|
+| 0–5 | 860 |
+| 5–10 | 24,625 |
+| 10–15 | 35,252 |
+| 15–20 | 27,376 |
+| **20–30** | **1,163** |
+| 30–50 | 17 |
+| 50–80 | 56 |
+| 80–120 | 87 |
+| 120–200 | 1,451 |
+| 200–500 | 73 |
+| 500+ | 7 |
+| 无大小数据 | 1,144 |
+
+15–20 MiB 区间有 27,376 首，而 20–30 MiB 区间骤降至 1,163 首，存在明显断崖，20 MiB 是单曲与串烧的自然分界点。120–200 MiB 区间的 1,451 首为典型的长串烧 SET。
+
+阈值可在 `scripts/classify.py` 顶部的 `MASHUP_SIZE_THRESHOLD` 中调整。
+
+### 中文 / 英文
+
+- 文件名含中文字符（Unicode `\u4e00-\u9fff`）→ **中文**
+- 否则含拉丁字母（A-Za-z）→ **英文**
+- 两者均无 → **其他**
+
+### 每日最新
+
+按 `time` 字段的日期（YYYY-MM-DD）分组，首页展示最新入库，日期归档页可按天浏览。
+
+## 项目结构
+
+```
+panda-index-site/
+├── data/
+│   ├── raw_tracks.csv       # 原始抓取数据（CSV, UTF-8 BOM）
+│   ├── raw_tracks.json      # 原始抓取数据（JSON）
+│   ├── classified.json      # 带分类标签的全量数据
+│   ├── stats.json           # 统计数字
+│   ├── size_histogram.json  # 文件大小分布
+│   └── scrape_state.json    # 爬虫断点状态
+├── scripts/
+│   ├── scrape.py            # 爬虫（并发5、重试、断点续抓）
+│   ├── classify.py          # 分类 + 统计
+│   ├── enrich_sources.py    # 来源音频直连地址补充（djuu/172mix 播放页提取 au）
+│   └── build_site.py        # 静态站点生成器
+├── site/                    # ← 部署到 GitHub Pages 的目录
+│   ├── index.html
+│   ├── assets/
+│   │   ├── style.css
+│   │   └── app.js
+│   └── data/
+│       ├── tracks.json      # 精简全量数据（~17 MB，含来源链接 u 与音频直连 au 字段）
+│       ├── stats.json
+│       └── dates.json
+└── README.md
+```
+
+## 站点功能
+
+- **首页**：统计数字卡片 + 6 个分类入口 + 最新入库 30 首
+- **分类浏览**：单曲 / 串烧 / 中文单曲 / 英文单曲 / 中文串烧 / 英文串烧，支持格式+语言组合筛选
+- **全部曲目**：客户端分页（每页 50 首），格式/语言下拉筛选
+- **搜索**：客户端 JS 基于文件名关键词模糊搜索，大小写不敏感
+- **日期归档**：700 个入库日期网格，点击查看当天全部曲目
+- **操作按钮（试听/下载，页内直接操作，白牌 UI）**：每行提供「试听」与「下载」按钮，**不跳转页面**。「试听」在页面底部弹出**科技风波纹播放器**（Canvas 动态波形可视化 + 播放/暂停 + 点击波形跳转进度）。**播放源优先级**：① 已补充来源音频直连地址的曲目（`au` 字段，来自 172mix/djuu 播放页提取的 CDN 直链）→ 播放器直接播放；② 其余曲目 → 本站 `/api/audio/{id}` 后台代理（服务端持登录会话实时转发，浏览器无需登录官方站）
+- **站内详情页（底层页，需登录）**：**未登录状态下列表文件名不可点击**——点击被拦截并弹出白牌登录提示（实测：模态框 + toast，URL 不变）；登录后点击文件名进入站内详情页（`?id=xxx`，零跳转）。详情页展示：**文件名、大小、入库时间、格式、语言**元数据卡片 + 来源站页面/下载入口 + **内嵌科技风波纹播放器**（点击播放，播放源=爬虫抓取的来源站音频直链 `au`；无直链曲目走 `/api/audio/{id}` 站内代理）。已实测：92184 详情页代理音频加载成功（时长 6:41 解析）；92120 经 172mix CDN 直连整曲播放（时间推进）
+- **注册/登录界面（白牌模态框，零跳转）**：页头「注册」「登录」按钮打开模态框（Tab 切换 + 用户名/邮箱/密码表单），提交后由**本站后台直接调用官方注册/登录接口**完成注册并自动登录（服务端无浏览器 CORS/SameSite 限制），成功后本站立即解锁详情/试听/下载，**全程无任何跳转官方界面**。全站注册/登录相关文案不出现平台名称
+- **响应式**：移动端适配，深色主题
+
+## 本地预览
+
+```bash
+cd site
+python -m http.server 8000
+# 浏览器打开 http://localhost:8000
+```
+
+## 部署到 GitHub Pages
+
+1. 在 GitHub 创建新仓库（如 `panda-dj-index`）
+2. 将 `panda-index-site/` 目录推送到仓库：
+   ```bash
+   cd panda-index-site
+   git init
+   git add .
+   git commit -m "9GDJ DJ Index - 92,111 tracks"
+   git branch -M main
+   git remote add origin https://github.com/<你的用户名>/panda-dj-index.git
+   git push -u origin main
+   ```
+3. 进入仓库 Settings → Pages → Source 选择 `Deploy from a branch`
+4. Branch 选择 `main`，目录选择 `/site`（或 `/root` 如果仓库根就是 site 内容），点击 Save
+5. 等待 1-2 分钟，站点将发布在 `https://<你的用户名>.github.io/panda-dj-index/`
+
+> **注意**：`site/data/tracks.json` 约 16 MB，GitHub Pages 单文件建议不超过 100 MB，完全在限制内。首次加载需要下载该文件（约 16 MB），之后浏览器缓存。
+
+## 更新数据
+
+重新运行完整流程（爬虫会自动断点续抓，只抓新增页）：
+
+```bash
+# 1. 抓取最新数据（自动跳过已完成页）
+python scripts/scrape.py
+
+# 2. 重新分类
+python scripts/classify.py
+
+# 3. 补充来源音频直连地址（断点续跑，只处理未覆盖曲目）
+python scripts/enrich_sources.py
+
+# 4. 重新生成站点
+python scripts/build_site.py
+
+# 5. 提交并推送
+git add .
+git commit -m "Update data"
+git push
+```
+
+如需强制全量重新抓取：`python scripts/scrape.py --reset`
+
+## 爬虫参数
+
+```bash
+python scripts/scrape.py [--pages 1-3] [--max-workers 5] [--reset]
+```
+
+- `--pages 1-3`：只抓指定页码范围（测试用）
+- `--max-workers 5`：并发数（默认 5）
+- `--reset`：清空状态重新开始
+
+爬虫特性：5 并发、浏览器 UA、0.3–0.9 秒随机延迟、302/429/5xx 指数退避重试（最多 4 次）、增量写入 CSV、断点续抓、失败页串行重试、按 ID 去重。
+
+## 验证结果
+
+- **抓取覆盖率**：3,071 / 3,071 页（100%），0 失败页
+- **去重**：按 # 字段去重，最终 92,111 条唯一记录
+- **分类抽样**：随机抽取 25 条人工核对，格式/语言/日期分类 **25/25 正确（100%）**
+- **站点验证**：本地静态服务器验证首页、分类页、全部曲目、搜索、日期归档、分页均正常
+- **按钮验证**：首页与搜索列表每行「试听/下载」按钮渲染正常；点击「试听」弹出波纹播放器（截图见 `索引站-波纹播放器.png`），未登录时正确显示白牌登录引导
+- **播放/下载实测（本轮，后台代理全链路）**：① 后台直连注册实测成功（表单提交 → 服务端调官方注册接口 → 自动登录 → 会话回传，页面零跳转）；② 代理试听实测：浏览器 fetch `/api/audio/92184` 返回 200 audio/mpeg 完整 16,056,121 字节（ID3 头），audio 元素成功加载并解析时长 6:41；③ 代理下载实测：登录态点击下载 → `/api/download/92184` 完整保存 16,056,121 字节 MP3（bu.download completed）；④ 来源直链播放实测：92120 经 172mix CDN 直连整曲播放（0:08/6:24 时间推进）；⑤ 未登录点击文件名/下载被拦截（模态框 + toast，URL 不变）
+- **来源音频补充**：`enrich_sources.py` 抓取来源播放页提取直链（djuu: 页面内联 `music={...file}` + `mp4.djuu.com/{file}.m4a`；172mix: 页面内联 jPlayer `src: mp3.172mix.com/mp3/...m4a`），结果独立存于 **`data/audio_map.json`**（{id: 直链}，原子写入）——scrape/classify 重跑不会清空已提取结果，站点构建时按 id 合并 `au` 字段。断点续跑（`enrich_state.json`）；未覆盖来源（a8dj/bbdj/vvvdj 等）暂走 pandadj 回退。**注意**：来源播放页有反爬风控（高峰期返回 403/挑战页），遇封禁时暂停任务、冷却后重跑即可续传（已提取结果不受影响）
+- **注册/登录实测**：模态框打开、Tab 切换、提交跳转官方注册/登录页均已浏览器实测通过；API 直传被 CORS/SameSite 硬限制（该站无 CORS 头 + 会话 Cookie SameSite=Lax，跨域 XHR/表单直传被浏览器拦截）
+- **大小解析**：MiB 数值正确提取，1,144 条无大小数据保留为 null
+- **时间解析**：YYYY-MM-DD HH:MM 格式正确解析
+
+## 技术栈
+
+- 爬虫：Python 3 + requests + BeautifulSoup4 + lxml
+- 站点：纯静态 HTML + CSS + 原生 JavaScript（无框架、无构建步骤）
+- 部署：GitHub Pages

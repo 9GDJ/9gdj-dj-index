@@ -1,4 +1,4 @@
-# Panda DJ Index — 前端 GitHub Pages 部署方案
+# 9GDJ DJ Index — 前端 GitHub Pages 部署方案
 
 ## 一、总体架构
 
@@ -26,12 +26,12 @@ GitHub Pages ──> https://<user>.github.io/<repo>/
 
 ### 步骤
 
-1. **创建仓库**（已创建：`9GDJ/panda-dj-index`，Public）
+1. **创建仓库**（已创建：`9GDJ/9gdj-dj-index`，Public）
 2. **上传整站文件**：`site/` 目录下所有文件（index.html、assets/、data/）
    - 单文件 <25MB，用 GitHub 网页 Upload files 逐个上传
    - 或 git push（推荐）：`git push origin main`
 3. **启用 GitHub Pages**：仓库 Settings → Pages → Source 选 `GitHub Actions`（已有 workflow 自动构建）或 `Deploy from a branch` → main / root
-4. **访问**：`https://9gdj.com/panda-dj-index/`
+4. **访问**：`https://9gdj.com/9gdj-dj-index/`
 
 ### 数据更新（每日）
 
@@ -61,7 +61,7 @@ Pages 自动重新部署（已有 .github/workflows/scrape.yml 的 Actions 模�
 ## 五、文件清单（打包内容）
 
 ```
-panda-dj-index/
+9gdj-dj-index/
 ├── site/                     # 静态站点（部署到 Pages 的根目录）
 │   ├── index.html
 │   ├── assets/style.css
