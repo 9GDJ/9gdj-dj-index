@@ -805,3 +805,62 @@ footer {
   .player-btn { width: 30px; height: 30px; font-size: 0.8rem; }
   .toast { left: 10px; right: 10px; }
 }
+
+/* ── 手机端深度优化（≤620px：列表卡片化、大触控）── */
+@media (max-width: 620px) {
+  /* 表格 → 卡片流 */
+  .track-table-wrap { overflow: visible; }
+  .track-table, .track-table thead, .track-table tbody, .track-table tr, .track-table td { display: block; width: 100%; box-sizing: border-box; }
+  .track-table thead { display: none; }
+  .track-table tr { position: relative; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; padding: 12px 12px 12px 46px; background: var(--bg-card); }
+  .track-table tr:hover { background: var(--bg-card); }
+  .track-table td { border: none !important; padding: 2px 0 !important; font-size: 0.8rem !important; }
+  .track-table .col-id { position: absolute; left: 12px; top: 14px; display: block !important; font-size: 0.68rem !important; color: var(--text-faint); }
+  /* 名称：主标题 */
+  .track-table tr > td:nth-child(2) { padding-right: 0 !important; }
+  .track-table .track-name { display: block; font-size: 0.92rem; font-weight: 600; line-height: 1.4; color: var(--text); }
+  /* 大小 + 时间：同行动态展示 */
+  .track-table .col-size, .track-table .col-time { display: inline-block !important; font-size: 0.72rem !important; color: var(--text-dim); margin-right: 12px; }
+  .track-table .col-size::before { content: "大小 "; color: var(--text-faint); }
+  .track-table .col-time::before { content: "入库 "; color: var(--text-faint); }
+  /* 标签 */
+  .track-table .col-tags { display: block !important; margin-top: 6px; }
+  /* 操作：全宽双按钮 */
+  .track-table .col-actions { display: flex !important; gap: 10px; margin-top: 10px; padding-top: 10px !important; border-top: 1px dashed var(--border) !important; }
+  .track-table .col-actions .act-btn { flex: 1; text-align: center; padding: 11px 0; font-size: 0.88rem; border-radius: 10px; margin-left: 0 !important; }
+  .track-table .col-actions .act-listen { background: var(--accent-soft); color: var(--accent); }
+  .track-table .col-actions .act-download { background: linear-gradient(135deg, #10b981, #06b6d4); color: #fff; }
+
+  /* 统计：3 列紧凑 */
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .stat-card { padding: 10px 4px; border-radius: 10px; }
+  .stat-card .num { font-size: 1.1rem; }
+  .stat-card .label { font-size: 0.64rem; margin-top: 2px; }
+
+  /* 分类卡 2 列 */
+  .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .cat-card { padding: 12px 12px; border-radius: 10px; }
+
+  /* 详情页 */
+  .detail-wrap { padding: 14px 12px; }
+  .detail-title { font-size: 0.95rem; }
+  .detail-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .detail-meta .m { padding: 8px 10px; }
+  .detail-meta .m .v { font-size: 0.8rem; }
+  .detail-links a.track-download { display: block; text-align: center; padding: 12px 14px; font-size: 0.95rem; margin: 0 0 12px; }
+  .detail-links a.back { display: inline-block; margin-bottom: 12px; }
+
+  /* 底部播放器：安全区 */
+  .player-bar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+  .player-name { max-width: 38vw; }
+  .player-btn { width: 34px; height: 34px; font-size: 0.85rem; }
+}
+
+/* 更小屏（≤380px）：进一步收紧 */
+@media (max-width: 380px) {
+  .track-table .col-time { display: none !important; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .logo { font-size: 0.9rem; }
+  .auth-entry { font-size: 0.64rem; }
+}
