@@ -1890,6 +1890,9 @@ def generate_html(stats, latest_tracks):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类</title>
     <meta name="description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索和日期归档。仅元数据索引，不存储音频文件。">
+    <meta name="theme-color" content="#0a0f1e">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./assets/icon-192.png">
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -1921,6 +1924,12 @@ def generate_html(stats, latest_tracks):
         <p>打开即可试听、下载（系统自动授权，无需注册登录）</p>
         <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 100)} MiB 即为串烧</p>
     </footer>
+    <script>
+        // PWA：仅 https 或 localhost 注册 Service Worker
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {{
+            navigator.serviceWorker.register('./sw.js').catch(function () {{}});
+        }}
+    </script>
     <script src="assets/app.js"></script>
 </body>
 </html>
@@ -1968,6 +1977,21 @@ def main():
     latest = tracks[:LATEST_ON_HOME]
     with open(os.path.join(SITE_DIR, "index.html"), "w", encoding="utf-8") as f:
         f.write(generate_html(stats, latest))
+
+    # 7. PWA 资源（manifest / sw / 图标，来自 pwa-assets/）
+    pwa_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pwa-assets")
+    if os.path.isdir(pwa_src):
+        for fn in ("manifest.webmanifest", "sw.js"):
+            s = os.path.join(pwa_src, fn)
+            if os.path.isfile(s):
+                shutil.copyfile(s, os.path.join(SITE_DIR, fn))
+        for fn in ("icon-192.png", "icon-512.png"):
+            s = os.path.join(pwa_src, fn)
+            if os.path.isfile(s):
+                shutil.copyfile(s, os.path.join(SITE_DIR, "assets", fn))
+        print("  PWA: manifest / sw / icons 已复制")
+    else:
+        print("  PWA: pwa-assets 目录不存在，跳过")
 
     print(f"\n站点已生成到: {SITE_DIR}")
     print(f"  index.html")
