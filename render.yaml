@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: panda-index-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    plan: free
+    healthCheckPath: /api/session
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: "*"
