@@ -139,19 +139,23 @@ def pick_account(ip):
     return ACCOUNTS[idx]
 
 
-def ensure_auto(ip=''):
-    """免登录自动授权：按访客 IP 分配账号，首次登录后该账号会话全局复用"""
-    acc = pick_account(ip or DEFAULT_CID)
-    key = acc['email']
-    ctx = _auto_sessions.get(key)
+def ensure_auto_for(email):
+    """按账号邮箱取/建免登录会话"""
+    ctx = _auto_sessions.get(email)
     if ctx and ctx.get('s'):
         return ctx
+    acc = next((a for a in ACCOUNTS if a['email'] == email), {'email': AUTO_EMAIL, 'password': AUTO_PASSWORD})
     s, msg = do_login(acc['email'], acc['password'])
     if isinstance(s, requests.Session):
         ctx = {'s': s, 'email': acc['email'], 'name': acc['email'].split('@')[0], 'time': time.time()}
-        _auto_sessions[key] = ctx
+        _auto_sessions[acc['email']] = ctx
         return ctx
     return None
+
+
+def ensure_auto(ip=''):
+    """免登录自动授权：按访客 IP 分配账号，首次登录后该账号会话全局复用"""
+    return ensure_auto_for(pick_account(ip or DEFAULT_CID)['email'])
 
 
 def proxy_stream(s, path, client_headers):
@@ -265,50 +269,44 @@ class Handler(BaseHTTPRequestHandler):
                 auto = ctx is None
                 if ctx is None:
                     ctx = ensure_auto(get_client_ip(self))
+                    if ctx is None:
+                        # 主账号瞬时失败 → 尝试备选账号
+                        _ip = get_client_ip(self)
+                        _main = pick_account(_ip)['email']
+                        for _acc in ACCOUNTS:
+                            if _acc['email'] != _main:
+                                ctx = ensure_auto_for(_acc['email'])
+                                if ctx:
+                                    break
                 ok = ctx is not None
                 email = ctx['email'] if ctx else ''
                 name = ctx['name'] if ctx else ''
             return self._json(200, {'ok': ok, 'email': email, 'name': name, 'auto': auto})
-        # ── 试听/下载代理（免登录自动授权，流式转发，不落盘）──
+        # ── 试听/下载代理（免登录自动授权，流式转发，不落盘；失败自动换账号重试）──
         m = re.match(r'^/api/(audio|download)/(\d+)$', path)
         if m and self.command == 'GET':
             kind, tid = m.group(1), m.group(2)
             with _lock:
-                ctx = get_ctx(cid) or ensure_auto(get_client_ip(self))
-                s = ctx['s'] if ctx else None
-            if s is None:
-                return self._json(401, {'ok': False, 'msg': '未登录'})
-            up = '/transload/download/' + tid
-            try:
-                r = proxy_stream(s, up, self.headers)
-            except Exception:
-                return self._json(502, {'ok': False, 'msg': '音频源连接失败'})
-            if r.status_code in (200, 206):
-                ct = r.headers.get('Content-Type', 'audio/mpeg')
-                cl = r.headers.get('Content-Length')
-                cr = r.headers.get('Content-Range')
-                self.send_response(r.status_code)
-                self.send_header('Content-Type', ct)
-                self.send_header('Accept-Ranges', 'bytes')
-                if cr:
-                    self.send_header('Content-Range', cr)
-                if kind == 'download':
-                    self.send_header('Content-Disposition', 'attachment; filename="%s.mp3"' % tid)
-                if cl:
-                    self.send_header('Content-Length', cl)
-                self.send_header('Cache-Control', 'no-store')
-                self._cors()
-                self.end_headers()
-                try:
-                    for chunk in r.iter_content(65536):
-                        if chunk:
-                            self.wfile.write(chunk)
-                except (BrokenPipeError, ConnectionResetError):
-                    pass
-                finally:
-                    r.close()
-                return
-            r.close()
+                uctx = get_ctx(cid)
+            if uctx and uctx.get('s'):
+                # 登录用户：用户会话
+                r = self._stream_audio(uctx['s'], tid, kind)
+                if r:
+                    return r
+                return self._json(502, {'ok': False, 'msg': '音频源响应异常'})
+            # 免登录：主账号 → 备选账号依次尝试
+            ip = get_client_ip(self)
+            main_email = pick_account(ip)['email']
+            emails = [main_email] + [a['email'] for a in ACCOUNTS if a['email'] != main_email]
+            for email in emails:
+                with _lock:
+                    ctx = ensure_auto_for(email)
+                    s = ctx['s'] if ctx else None
+                if s is None:
+                    continue
+                rr = self._stream_audio(s, tid, kind)
+                if rr:
+                    return rr
             return self._json(502, {'ok': False, 'msg': '音频源响应异常'})
         return self._json(404, {'ok': False, 'msg': 'not found'})
 
@@ -335,6 +333,40 @@ class Handler(BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(data)
+
+    def _stream_audio(self, s, tid, kind):
+        """尝试用某会话流式转发音频；失败返回 None，成功返回已响应结果"""
+        try:
+            r = proxy_stream(s, '/transload/download/' + tid, self.headers)
+        except Exception:
+            return None
+        if r.status_code not in (200, 206):
+            r.close()
+            return None
+        ct = r.headers.get('Content-Type', 'audio/mpeg')
+        cl = r.headers.get('Content-Length')
+        cr = r.headers.get('Content-Range')
+        self.send_response(r.status_code)
+        self.send_header('Content-Type', ct)
+        self.send_header('Accept-Ranges', 'bytes')
+        if cr:
+            self.send_header('Content-Range', cr)
+        if kind == 'download':
+            self.send_header('Content-Disposition', 'attachment; filename="%s.mp3"' % tid)
+        if cl:
+            self.send_header('Content-Length', cl)
+        self.send_header('Cache-Control', 'no-store')
+        self._cors()
+        self.end_headers()
+        try:
+            for chunk in r.iter_content(65536):
+                if chunk:
+                    self.wfile.write(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        finally:
+            r.close()
+        return True
 
     def do_POST(self):
         self._api()
