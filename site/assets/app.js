@@ -301,6 +301,12 @@
     });
 
     updateNav(q.format || q.q || q.date ? 'list' : 'all');
+    // 从详情返回时恢复列表滚动位置
+    const savedScroll = sessionStorage.getItem('dj_list_scroll');
+    if (savedScroll) {
+      sessionStorage.removeItem('dj_list_scroll');
+      setTimeout(function() { window.scrollTo(0, parseInt(savedScroll) || 0); }, 60);
+    }
   }
 
   // ── 日期归档 ──
@@ -586,6 +592,9 @@
 
   // ── 移动端：整卡点击进详情（≤620px；排除按钮/链接/选中文本）──
   document.addEventListener('click', function(e) {
+    // 进入详情前记住列表滚动位置（文件名点击 & 移动端整卡）
+    const nameLink = e.target.closest('a.track-name');
+    if (nameLink) sessionStorage.setItem('dj_list_scroll', String(window.scrollY || 0));
     if (window.innerWidth > 620) return;
     if (window.getSelection && window.getSelection().toString()) return;
     const tr = e.target.closest('.track-table tr');
@@ -594,6 +603,43 @@
     const link = tr.querySelector('a.track-name');
     if (link) { e.preventDefault(); location.href = link.getAttribute('href'); }
   });
+
+  // ── PWA 安装引导（移动端；iOS 文字引导，Android 原生安装）──
+  (function() {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
+    let deferredPrompt = null;
+    const tipId = 'pwa-install-tip';
+    function makeTip(text) {
+      const tip = el('div', {id: tipId, class: 'pwa-tip'});
+      tip.appendChild(el('div', {class: 'pwa-tip-text', text: text}));
+      return tip;
+    }
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (document.getElementById(tipId)) return;
+      const tip = makeTip('安装 9GDJ 到主屏幕，像 App 一样秒开听歌');
+      const installBtn = el('button', {type: 'button', class: 'pwa-tip-btn install', text: '安装'});
+      installBtn.onclick = function() { if (deferredPrompt) deferredPrompt.prompt(); tip.remove(); };
+      const closeBtn = el('button', {type: 'button', class: 'pwa-tip-btn', text: '稍后'});
+      closeBtn.onclick = function() { tip.remove(); };
+      tip.appendChild(installBtn);
+      tip.appendChild(closeBtn);
+      document.body.appendChild(tip);
+      setTimeout(function() { tip.classList.add('show'); }, 800);
+    });
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      setTimeout(function() {
+        if (document.getElementById(tipId)) return;
+        const tip = makeTip('点击 Safari 分享按钮 → 「添加到主屏幕」，即可像 App 一样使用');
+        const okBtn = el('button', {type: 'button', class: 'pwa-tip-btn', text: '知道了'});
+        okBtn.onclick = function() { tip.remove(); };
+        tip.appendChild(okBtn);
+        document.body.appendChild(tip);
+        setTimeout(function() { tip.classList.add('show'); }, 100);
+      }, 4500);
+    }
+  })();
 
   // ── Toast ──
   function toast(msg) {
