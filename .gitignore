@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv*/
+.venv-test/
+.wrangler/
+
+# 大体积中间产物（每次流水线重新生成，无需提交）
+data/classified.json
+data/raw_tracks.json
+
+# 临时/日志文件
+*.log
+build_log*.txt
+_*.py
+_*.txt
