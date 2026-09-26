@@ -850,6 +850,10 @@ footer {
   .detail-links a.track-download { display: block; text-align: center; padding: 12px 14px; font-size: 0.95rem; margin: 0 0 12px; }
   .detail-links a.back { display: inline-block; margin-bottom: 12px; }
 
+  /* iOS 输入框防自动放大（<16px 会触发 Safari 缩放） */
+  .search-box input { font-size: 16px; }
+  .filter-bar select { font-size: 16px; }
+
   /* 底部播放器：安全区 */
   .player-bar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
   body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }

@@ -584,6 +584,17 @@
     }
   }
 
+  // ── 移动端：整卡点击进详情（≤620px；排除按钮/链接/选中文本）──
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth > 620) return;
+    if (window.getSelection && window.getSelection().toString()) return;
+    const tr = e.target.closest('.track-table tr');
+    if (!tr) return;
+    if (e.target.closest('a, button')) return;
+    const link = tr.querySelector('a.track-name');
+    if (link) { e.preventDefault(); location.href = link.getAttribute('href'); }
+  });
+
   // ── Toast ──
   function toast(msg) {
     let t = document.getElementById('toast');
