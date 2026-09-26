@@ -1,0 +1,71 @@
+name: daily-scrape-update
+
+on:
+  schedule:
+    - cron: '0 2,14 * * *'   # UTC 02:00 / 14:00 = 北京时间 10:00 / 22:00
+  workflow_dispatch:        # 支持手动触发
+  push:
+    branches: [main]        # 上传文件自动触发（commit-and-push 内部提交带 [skip ci] 防死循环）
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Scrape new tracks
+        run: python scripts/scrape.py
+
+      - name: Classify (single/mashup, zh/en)
+        run: python scripts/classify.py
+
+      - name: Clean bad rows
+        run: python scripts/clean_bad.py
+
+      - name: Build site
+        run: python scripts/build_site.py
+
+      - name: Update README stats
+        run: python scripts/update_readme.py
+
+      - name: Commit and push updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "daily update $(date +%F) [skip ci]"
+          git push
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
