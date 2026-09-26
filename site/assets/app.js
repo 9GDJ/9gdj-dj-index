@@ -122,7 +122,7 @@
       tagTd.appendChild(el('span', {class: 'tag tag-' + (t.l === 0 ? 'zh' : t.l === 1 ? 'en' : 'other'), text: LANG_NAMES[t.l]}));
       tr.appendChild(tagTd);
       const actTd = el('td', {class: 'col-actions'});
-      const dlUrl = API + '/api/download/' + t.i + '?cid=' + getCid();
+      const dlUrl = buildDlUrl(t);
       const listenBtn = el('button', {type: 'button', class: 'act-btn act-listen', text: '试听'});
       listenBtn.dataset.id = t.i;
       listenBtn.dataset.name = t.n;
@@ -363,7 +363,7 @@
 
     const links = el('div', {class: 'detail-links'});
     if (t.u) links.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}));
-    links.appendChild(el('a', {href: API + '/api/download/' + t.i + '?cid=' + getCid(), class: 'track-download', text: '下载', download: t.n}));
+    links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
     wrap.appendChild(links);
 
     // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
@@ -665,6 +665,31 @@
       localStorage.setItem('panda_cid', c);
     }
     return c;
+  }
+  // 从文件名启发式解析艺术家
+  function parseArtist(name) {
+    let m = String(name || '').match(/^(.+?)\s*[-–—~]\s*(.+)$/);
+    if (m) return m[1].trim();
+    m = String(name || '').match(/^(.+?)[\[【（(]\s*(.+?)\s*[\]】）)]$/);
+    if (m) return m[2].trim();
+    return '';
+  }
+  // 按分类推断流派
+  function inferGenre(t) {
+    if (String(t.f) === '1') return 'Mashup / Non-Stop';
+    if (String(t.l) === '0') return '华语舞曲';
+    if (String(t.l) === '1') return 'Electronic / Remix';
+    return 'Dance';
+  }
+  // 下载链接（带 ID3 元数据参数：曲名/艺术家/流派）
+  function buildDlUrl(t) {
+    const name = String(t.n || 'Track').replace(/\.(mp3|wav|flac|m4a|ogg)$/i, '');
+    const artist = parseArtist(name);
+    const genre = inferGenre(t);
+    return (window.API_BASE || '') + '/api/download/' + t.i + '?cid=' + getCid()
+      + '&n=' + encodeURIComponent(name)
+      + '&a=' + encodeURIComponent(artist)
+      + '&g=' + encodeURIComponent(genre);
   }
   function isAuthed() { return localStorage.getItem('panda_auth') === '1'; }
   function setAuthed(v, name) {
