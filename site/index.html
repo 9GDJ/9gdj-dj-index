@@ -23,11 +23,11 @@
                 <a href="?format=single">单曲</a>
                 <a href="?format=mashup">串烧</a>
             </nav>
-            <nav style="gap:2px;align-items:center;">
-                <span style="color:#7cf59c;font-weight:600;" id="auth-auto">🔓 自动授权已开启</span>
-                <span style="color:#ffd75e;font-weight:600;display:none;" id="auth-user"></span>
-                <button type="button" id="auth-open" style="background:linear-gradient(135deg,#8a2be2,#00bfff);border:none;color:#fff;border-radius:14px;padding:4px 12px;font-size:0.75rem;cursor:pointer;">登录 / 注册</button>
-                <button type="button" id="auth-logout" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#ff9d9d;border-radius:14px;padding:4px 10px;font-size:0.72rem;cursor:pointer;display:none;">登出</button>
+            <nav style="gap:4px;align-items:center;flex-wrap:wrap;">
+                <span id="auth-auto" style="display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;">🔓 自动授权已开启</span>
+                <span id="auth-user" style="display:none;background:linear-gradient(135deg,rgba(255,215,94,.18),rgba(255,170,60,.14));border:1px solid rgba(255,215,94,.5);color:#ffd75e;font-weight:700;border-radius:999px;padding:3px 12px;font-size:0.72rem;"></span>
+                <button type="button" id="auth-open" style="background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 14px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;">登录 / 注册</button>
+                <button type="button" id="auth-logout" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,120,120,.4);color:#ff9d9d;border-radius:999px;padding:4px 12px;font-size:0.72rem;cursor:pointer;display:none;">退出</button>
             </nav>
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="搜索曲目名...">
@@ -41,7 +41,7 @@
     <footer>
         <p>数据来源：互联网 公开列表 | 仅元数据索引，不存储音频文件 | 共 91,267 首曲目</p>
         <p>打开即可试听、下载（系统自动授权已开启；也可自行注册/登录）</p>
-        <p>生成时间：2026-09-29 10:08:53 | 分类阈值：≥100.0 MiB 即为串烧</p>
+        <p>生成时间：2026-09-29 10:36:46 | 分类阈值：≥100.0 MiB 即为串烧</p>
     </footer>
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-modal">
@@ -77,6 +77,6 @@
             navigator.serviceWorker.register('./sw.js').catch(function () {});
         }
     </script>
-    <script src="assets/app.js?v=20260926b"></script>
+    <script src="assets/app.js?v=20260929"></script>
 </body>
 </html>

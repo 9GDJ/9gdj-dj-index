@@ -988,7 +988,7 @@
       const btn = document.getElementById('auth-submit-register');
       busy(btn, true);
       try {
-        const r = await fetch(API + '/api/register', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({name: name, email: email, password: pass})});
+        const r = await fetch(API + '/api/register?cid=' + getCid(), {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({name: name, email: email, password: pass})});
         const d = await r.json();
         if (d.ok) { setAuthed(true, d.name); close(); toast('注册成功，已自动登录。'); }
         else setNote('auth-note-register', d.msg || '注册失败，请稍后重试。');
@@ -1002,7 +1002,7 @@
       const btn = document.getElementById('auth-submit-login');
       busy(btn, true);
       try {
-        const r = await fetch(API + '/api/login', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({email: email, password: pass})});
+        const r = await fetch(API + '/api/login?cid=' + getCid(), {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Client-Id': getCid()}, body: JSON.stringify({email: email, password: pass})});
         const d = await r.json();
         if (d.ok) { setAuthed(true, d.name); close(); toast('登录成功。'); }
         else setNote('auth-note-login', d.msg || '登录失败，请稍后重试。');
