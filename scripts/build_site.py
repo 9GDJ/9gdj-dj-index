@@ -165,35 +165,48 @@ nav a:hover, nav a.active {
   color: var(--accent);
 }
 
-/* ── 搜索栏（主区顶部居中，科技胶囊风）── */
+/* ── 搜索栏（主区顶部居中 · 一体发光面板）── */
 .search-box {
   max-width: 640px;
   width: 100%;
   margin: 0 auto 24px;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  background: rgba(13, 18, 32, 0.72);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: 16px;
+  padding: 6px 6px 6px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 24px rgba(16, 185, 129, 0.16);
+}
+.search-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 10px;
+  color: var(--text-faint);
 }
 .search-box input {
   flex: 1;
   min-width: 0;
-  padding: 12px 18px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 12px;
-  background: rgba(13, 18, 32, 0.9);
+  padding: 12px 4px;
+  border: none;
+  background: transparent;
   color: var(--text);
   font-size: 0.95rem;
   outline: none;
-  transition: all 0.2s;
 }
 .search-box input::placeholder { color: var(--text-faint); }
-.search-box input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), 0 0 18px rgba(16, 185, 129, 0.18);
-}
 .search-box button {
-  padding: 12px 26px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 12px;
+  border-radius: 11px;
   background: linear-gradient(135deg, #10b981, #06b6d4);
   color: #fff;
   font-size: 0.95rem;
@@ -204,7 +217,7 @@ nav a:hover, nav a.active {
 }
 .search-box button:hover {
   background: linear-gradient(135deg, #0d9e6f, #0598b4);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
@@ -903,9 +916,11 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 8px; }
   main { padding: 12px 8px 70px; }
-  .search-box { gap: 8px; margin-bottom: 14px; }
-  .search-box input { padding: 11px 12px; font-size: 0.85rem; border-radius: 10px; }
-  .search-box button { padding: 11px 16px; font-size: 0.85rem; border-radius: 10px; }
+  .search-box { gap: 0; margin-bottom: 14px; padding: 5px 5px 5px 12px; border-radius: 13px; }
+  .search-icon { margin-right: 8px; }
+  .search-icon svg { width: 16px; height: 16px; }
+  .search-box input { padding: 11px 2px; font-size: 0.85rem; }
+  .search-box button { padding: 11px 18px; font-size: 0.85rem; border-radius: 10px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
   .track-table .col-time { display: none; }
   .track-table th, .track-table td { padding: 6px 6px; font-size: 0.75rem; }
@@ -2090,6 +2105,7 @@ def generate_html(stats, latest_tracks):
         </div>
     </header>
     <div class="search-box">
+        <span class="search-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
         <input type="text" id="search-input" placeholder="搜索曲目名（支持名称 / DJ / 版本关键词）...">
         <button id="search-btn">搜索</button>
     </div>
