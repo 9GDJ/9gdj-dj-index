@@ -2044,7 +2044,7 @@ def generate_html(stats, latest_tracks):
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <script>window.API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? '' : 'https://ideal-tarantula-8406.9gdj.deno.net';</script>
+    <script>window.API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? '' : 'https://9gdj-proxy.114155125.workers.dev';</script>
     <script>window.__LATEST__ = {latest_min_json};</script>
     <header>
         <div class="header-inner">
@@ -2085,6 +2085,188 @@ def generate_html(stats, latest_tracks):
 """
 
 
+def apply_js_patches(js):
+    """对生成的 app.js 追加本地增强：分页 API 分流 + 注册/登录按钮绑定 + 昵称显示（普通字符串，无 f-string 转义）"""
+    # 1) LOCAL_MODE 常量
+    a1 = "  let ALL_TRACKS = null;"
+    n1 = "  let ALL_TRACKS = null;\n  const LOCAL_MODE = (window.API_BASE === '');"
+    if js.count(a1) == 1:
+        js = js.replace(a1, n1)
+    # 2) ensureTracks 本地短路
+    a2 = "  function ensureTracks() {\n    if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);"
+    n2 = "  function ensureTracks() {\n    if (LOCAL_MODE) return Promise.resolve(null);\n    if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);"
+    if js.count(a2) == 1:
+        js = js.replace(a2, n2)
+    # 3) findTrackById 本地分支
+    a3 = "  function findTrackById(id) {\n    if (ALL_TRACKS) {"
+    n3 = ("  function findTrackById(id) {\n"
+          "    if (LOCAL_MODE) {\n"
+          "      return fetch(API + '/api/track?id=' + id).then(r => r.json()).then(d => d.ok ? d.track : null).catch(function() { return null; });\n"
+          "    }\n"
+          "    if (ALL_TRACKS) {")
+    if js.count(a3) == 1:
+        js = js.replace(a3, n3)
+    # 4) renderList 本地分页分支
+    a4 = "    // 过滤\n    let result = ALL_TRACKS;"
+    blk4 = ("    // 本地模式：列表/搜索/日期走 server 分页 API（避免加载 17MB 全量）\n"
+            "    if (LOCAL_MODE) {\n"
+            "      const params = new URLSearchParams();\n"
+            "      if (q.format) params.set('format', q.format);\n"
+            "      if (q.lang) params.set('lang', q.lang);\n"
+            "      if (q.date) params.set('date', q.date);\n"
+            "      if (q.q) params.set('q', q.q);\n"
+            "      const page = parseInt(q.page) || 1;\n"
+            "      params.set('page', page);\n"
+            "      params.set('per', PAGE_SIZE);\n"
+            "      try {\n"
+            "        const d = await fetch(API + '/api/tracks?' + params.toString()).then(r => r.json());\n"
+            "        if (!d.ok) throw new Error(d.msg || 'load failed');\n"
+            "        filtered = d.tracks;\n"
+            "        const bar = el('div', {class: 'filter-bar'});\n"
+            "        const fmtSel = el('select');\n"
+            "        [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(function(vl) {\n"
+            "          const o = el('option', {value: vl[0], text: vl[1]});\n"
+            "          if (q.format === vl[0]) o.selected = true;\n"
+            "          fmtSel.appendChild(o);\n"
+            "        });\n"
+            "        fmtSel.onchange = function() { const nq = getQuery(); nq.format = fmtSel.value; if (!nq.format) delete nq.format; nq.page = 1; setQuery(nq); renderList(); };\n"
+            "        bar.appendChild(fmtSel);\n"
+            "        const langSel = el('select');\n"
+            "        [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(function(vl) {\n"
+            "          const o = el('option', {value: vl[0], text: vl[1]});\n"
+            "          if (q.lang === vl[0]) o.selected = true;\n"
+            "          langSel.appendChild(o);\n"
+            "        });\n"
+            "        langSel.onchange = function() { const nq = getQuery(); nq.lang = langSel.value; if (!nq.lang) delete nq.lang; nq.page = 1; setQuery(nq); renderList(); };\n"
+            "        bar.appendChild(langSel);\n"
+            "        bar.appendChild(el('span', {class: 'result-count', text: '共 ' + d.total.toLocaleString() + ' 条'}));\n"
+            "        m.appendChild(bar);\n"
+            "        renderTrackTable(d.tracks, m);\n"
+            "        renderPagination(d.total, page, m, function(p) {\n"
+            "          const nq = getQuery(); nq.page = p; setQuery(nq); renderList();\n"
+            "          window.scrollTo({top: 0, behavior: 'smooth'});\n"
+            "        });\n"
+            "        updateNav(q.format || q.q || q.date ? 'list' : 'all');\n"
+            "        const savedScroll = sessionStorage.getItem('dj_list_scroll');\n"
+            "        if (savedScroll) {\n"
+            "          sessionStorage.removeItem('dj_list_scroll');\n"
+            "          setTimeout(function() { window.scrollTo(0, parseInt(savedScroll) || 0); }, 60);\n"
+            "        }\n"
+            "        return;\n"
+            "      } catch (e) { showLoading('数据加载失败: ' + e.message); return; }\n"
+            "    }\n"
+            "\n"
+            "    // 过滤\n"
+            "    let result = ALL_TRACKS;")
+    if js.count(a4) == 1:
+        js = js.replace(a4, blk4)
+    # 5) refreshAuthUI 补全（显示昵称）
+    a5 = "  function refreshAuthUI() {\n    // 昵称显示模块已移除（仅保留自动授权标识）\n  }"
+    n5 = ("  function refreshAuthUI() {\n"
+          "    const autoEl = document.getElementById('auth-auto');\n"
+          "    const userEl = document.getElementById('auth-user');\n"
+          "    const openBtn = document.getElementById('auth-open');\n"
+          "    const logoutBtn = document.getElementById('auth-logout');\n"
+          "    if (!autoEl) return;\n"
+          "    const showAuto = function(txt) {\n"
+          "      autoEl.style.display = 'inline';\n"
+          "      autoEl.textContent = txt || '🔓 自动授权已开启';\n"
+          "      if (userEl) userEl.style.display = 'none';\n"
+          "      if (openBtn) openBtn.style.display = 'inline-block';\n"
+          "      if (logoutBtn) logoutBtn.style.display = 'none';\n"
+          "    };\n"
+          "    const showUser = function(name) {\n"
+          "      autoEl.style.display = 'none';\n"
+          "      if (userEl) { userEl.style.display = 'inline'; userEl.textContent = '👤 ' + name; }\n"
+          "      if (openBtn) openBtn.style.display = 'none';\n"
+          "      if (logoutBtn) logoutBtn.style.display = 'inline-block';\n"
+          "    };\n"
+          "    fetch(API + '/api/session?cid=' + getCid()).then(function(r) { return r.json(); }).then(function(d) {\n"
+          "      if (d && d.ok && d.name && !d.auto) showUser(d.name);\n"
+          "      else if (d && d.ok && d.name) showAuto('🔓 自动授权已开启（' + d.name + '）');\n"
+          "      else showAuto('🔓 自动授权已开启');\n"
+          "    }).catch(function() { showAuto('🔓 自动授权已开启'); });\n"
+          "  }")
+    if js.count(a5) == 1:
+        js = js.replace(a5, n5)
+    # 6) 导航栏登录/登出按钮绑定（插在 .auth-entry 绑定块前）
+    a6 = "  // 页头注册/登录入口"
+    n6 = ("  // 导航栏登录/登出按钮\n"
+          "  const authOpenBtn = document.getElementById('auth-open');\n"
+          "  if (authOpenBtn) authOpenBtn.onclick = function() { if (auth) auth.open('login'); };\n"
+          "  const authLogoutBtn = document.getElementById('auth-logout');\n"
+          "  if (authLogoutBtn) authLogoutBtn.onclick = function() {\n"
+          "    try { fetch(API + '/api/logout?cid=' + getCid()); } catch (e) {}\n"
+          "    setAuthed(false);\n"
+          "    toast('已退出登录。');\n"
+          "  };\n"
+          "  // 页头注册/登录入口")
+    if js.count(a6) == 1:
+        js = js.replace(a6, n6)
+    return js
+
+
+def apply_html_patches(html):
+    """对生成的 index.html 追加本地增强：登录/注册按钮 + 昵称显示 + 白牌模态框（普通字符串）"""
+    # 1) 导航区加登录/注册、昵称、登出
+    a1 = ("<nav style=\"gap:2px;\">\n"
+          "                <span class=\"auth-entry\" style=\"color:#7cf59c;font-weight:600;\" id=\"auth-auto\">🔓 自动授权已开启</span>\n"
+          "            </nav>")
+    n1 = ("<nav style=\"gap:2px;align-items:center;\">\n"
+          "                <span style=\"color:#7cf59c;font-weight:600;\" id=\"auth-auto\">🔓 自动授权已开启</span>\n"
+          "                <span style=\"color:#ffd75e;font-weight:600;display:none;\" id=\"auth-user\"></span>\n"
+          "                <button type=\"button\" id=\"auth-open\" style=\"background:linear-gradient(135deg,#8a2be2,#00bfff);border:none;color:#fff;border-radius:14px;padding:4px 12px;font-size:0.75rem;cursor:pointer;\">登录 / 注册</button>\n"
+          "                <button type=\"button\" id=\"auth-logout\" style=\"background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#ff9d9d;border-radius:14px;padding:4px 10px;font-size:0.72rem;cursor:pointer;display:none;\">登出</button>\n"
+          "            </nav>")
+    if html.count(a1) == 1:
+        html = html.replace(a1, n1)
+    # 2) script src 版本号
+    a2 = "<script src=\"assets/app.js\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20260926b\"></script>"
+    if html.count(a2) == 1:
+        html = html.replace(a2, n2)
+    # 3) footer 文案
+    a3 = "打开即可试听、下载（系统自动授权，无需注册登录）"
+    n3 = "打开即可试听、下载（系统自动授权已开启；也可自行注册/登录）"
+    if html.count(a3) == 1:
+        html = html.replace(a3, n3)
+    # 4) body 末尾加白牌模态框
+    a4 = "</footer>"
+    n4 = ("</footer>\n"
+          "    <div id=\"auth-overlay\" class=\"auth-overlay\">\n"
+          "        <div class=\"auth-modal\">\n"
+          "            <div class=\"auth-head\">\n"
+          "                <span class=\"t\" id=\"auth-title\">登录</span>\n"
+          "                <button type=\"button\" class=\"auth-close\" id=\"auth-close\" aria-label=\"关闭\">×</button>\n"
+          "            </div>\n"
+          "            <div class=\"auth-tabs\">\n"
+          "                <button type=\"button\" class=\"auth-tab on\" data-tab=\"login\">登录</button>\n"
+          "                <button type=\"button\" class=\"auth-tab\" data-tab=\"register\">注册</button>\n"
+          "            </div>\n"
+          "            <div class=\"auth-body\">\n"
+          "                <form id=\"auth-form-login\" onsubmit=\"return false;\">\n"
+          "                    <div class=\"auth-field\"><label>邮箱</label><input type=\"email\" id=\"auth-login-email\" placeholder=\"you@example.com\" autocomplete=\"email\"></div>\n"
+          "                    <div class=\"auth-field\"><label>密码</label><input type=\"password\" id=\"auth-login-pass\" placeholder=\"••••••\" autocomplete=\"current-password\"></div>\n"
+          "                    <button type=\"submit\" class=\"auth-submit\" id=\"auth-submit-login\">登录</button>\n"
+          "                    <div class=\"auth-note\" id=\"auth-note-login\"></div>\n"
+          "                </form>\n"
+          "                <form id=\"auth-form-register\" style=\"display:none;\" onsubmit=\"return false;\">\n"
+          "                    <div class=\"auth-field\"><label>昵称</label><input type=\"text\" id=\"auth-name\" placeholder=\"你的昵称\" autocomplete=\"nickname\"></div>\n"
+          "                    <div class=\"auth-field\"><label>邮箱</label><input type=\"email\" id=\"auth-email\" placeholder=\"you@example.com\" autocomplete=\"email\"></div>\n"
+          "                    <div class=\"auth-field\"><label>密码</label><input type=\"password\" id=\"auth-pass\" placeholder=\"至少 6 位\" autocomplete=\"new-password\"></div>\n"
+          "                    <div class=\"auth-field\"><label>确认密码</label><input type=\"password\" id=\"auth-pass2\" placeholder=\"再次输入\" autocomplete=\"new-password\"></div>\n"
+          "                    <button type=\"submit\" class=\"auth-submit\" id=\"auth-submit-register\">注册</button>\n"
+          "                    <div class=\"auth-note\" id=\"auth-note-register\"></div>\n"
+          "                </form>\n"
+          "            </div>\n"
+          "        </div>\n"
+          "    </div>")
+    if html.count(a4) == 1:
+        html = html.replace(a4, n4, 1)
+    return html
+
+
+
 def main():
     print("加载分类数据...")
     tracks, stats = load_data()
@@ -2120,12 +2302,12 @@ def main():
 
     # 5. JS
     with open(os.path.join(SITE_DIR, "assets", "app.js"), "w", encoding="utf-8") as f:
-        f.write(generate_js(len(tracks), PAGE_SIZE, LATEST_ON_HOME))
+        f.write(apply_js_patches(generate_js(len(tracks), PAGE_SIZE, LATEST_ON_HOME)))
 
     # 6. HTML
     latest = tracks[:LATEST_ON_HOME]
     with open(os.path.join(SITE_DIR, "index.html"), "w", encoding="utf-8") as f:
-        f.write(generate_html(stats, latest))
+        f.write(apply_html_patches(generate_html(stats, latest)))
 
     # 7. PWA 资源（manifest / sw / 图标，来自 pwa-assets/）
     pwa_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pwa-assets")
