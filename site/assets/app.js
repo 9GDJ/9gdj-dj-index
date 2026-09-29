@@ -4,6 +4,7 @@
 
   const PAGE_SIZE = 50;
   let ALL_TRACKS = null;
+  const LOCAL_MODE = (window.API_BASE === '');
   let STATS = null;
   let DATES = null;
   let currentPage = 1;
@@ -57,6 +58,7 @@
   // 懒加载全量曲目数据（首次需要时拉取，之后缓存于内存）
   let TRACKS_PROMISE = null;
   function ensureTracks() {
+    if (LOCAL_MODE) return Promise.resolve(null);
     if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);
     if (!TRACKS_PROMISE) {
       TRACKS_PROMISE = fetch('data/tracks.json')
@@ -67,6 +69,9 @@
     return TRACKS_PROMISE;
   }
   function findTrackById(id) {
+    if (LOCAL_MODE) {
+      return fetch(API + '/api/track?id=' + id).then(r => r.json()).then(d => d.ok ? d.track : null).catch(function() { return null; });
+    }
     if (ALL_TRACKS) {
       const t = ALL_TRACKS.find(x => String(x.i) === String(id));
       if (t) return Promise.resolve(t);
@@ -254,6 +259,54 @@
     if (q.date) title = q.date + ' 入库';
     bc.appendChild(el('span', {text: title}));
     m.appendChild(bc);
+
+    // 本地模式：列表/搜索/日期走 server 分页 API（避免加载 17MB 全量）
+    if (LOCAL_MODE) {
+      const params = new URLSearchParams();
+      if (q.format) params.set('format', q.format);
+      if (q.lang) params.set('lang', q.lang);
+      if (q.date) params.set('date', q.date);
+      if (q.q) params.set('q', q.q);
+      const page = parseInt(q.page) || 1;
+      params.set('page', page);
+      params.set('per', PAGE_SIZE);
+      try {
+        const d = await fetch(API + '/api/tracks?' + params.toString()).then(r => r.json());
+        if (!d.ok) throw new Error(d.msg || 'load failed');
+        filtered = d.tracks;
+        const bar = el('div', {class: 'filter-bar'});
+        const fmtSel = el('select');
+        [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(function(vl) {
+          const o = el('option', {value: vl[0], text: vl[1]});
+          if (q.format === vl[0]) o.selected = true;
+          fmtSel.appendChild(o);
+        });
+        fmtSel.onchange = function() { const nq = getQuery(); nq.format = fmtSel.value; if (!nq.format) delete nq.format; nq.page = 1; setQuery(nq); renderList(); };
+        bar.appendChild(fmtSel);
+        const langSel = el('select');
+        [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(function(vl) {
+          const o = el('option', {value: vl[0], text: vl[1]});
+          if (q.lang === vl[0]) o.selected = true;
+          langSel.appendChild(o);
+        });
+        langSel.onchange = function() { const nq = getQuery(); nq.lang = langSel.value; if (!nq.lang) delete nq.lang; nq.page = 1; setQuery(nq); renderList(); };
+        bar.appendChild(langSel);
+        bar.appendChild(el('span', {class: 'result-count', text: '共 ' + d.total.toLocaleString() + ' 条'}));
+        m.appendChild(bar);
+        renderTrackTable(d.tracks, m);
+        renderPagination(d.total, page, m, function(p) {
+          const nq = getQuery(); nq.page = p; setQuery(nq); renderList();
+          window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+        updateNav(q.format || q.q || q.date ? 'list' : 'all');
+        const savedScroll = sessionStorage.getItem('dj_list_scroll');
+        if (savedScroll) {
+          sessionStorage.removeItem('dj_list_scroll');
+          setTimeout(function() { window.scrollTo(0, parseInt(savedScroll) || 0); }, 60);
+        }
+        return;
+      } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
+    }
 
     // 过滤
     let result = ALL_TRACKS;
@@ -701,7 +754,29 @@
     refreshAuthUI();
   }
   function refreshAuthUI() {
-    // 昵称显示模块已移除（仅保留自动授权标识）
+    const autoEl = document.getElementById('auth-auto');
+    const userEl = document.getElementById('auth-user');
+    const openBtn = document.getElementById('auth-open');
+    const logoutBtn = document.getElementById('auth-logout');
+    if (!autoEl) return;
+    const showAuto = function(txt) {
+      autoEl.style.display = 'inline';
+      autoEl.textContent = txt || '🔓 自动授权已开启';
+      if (userEl) userEl.style.display = 'none';
+      if (openBtn) openBtn.style.display = 'inline-block';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    };
+    const showUser = function(name) {
+      autoEl.style.display = 'none';
+      if (userEl) { userEl.style.display = 'inline'; userEl.textContent = '👤 ' + name; }
+      if (openBtn) openBtn.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    };
+    fetch(API + '/api/session?cid=' + getCid()).then(function(r) { return r.json(); }).then(function(d) {
+      if (d && d.ok && d.name && !d.auto) showUser(d.name);
+      else if (d && d.ok && d.name) showAuto('🔓 自动授权已开启（' + d.name + '）');
+      else showAuto('🔓 自动授权已开启');
+    }).catch(function() { showAuto('🔓 自动授权已开启'); });
   }
 
   // ── 搜索 ──
@@ -946,6 +1021,15 @@
     return {open: open, close: close};
   })();
 
+  // 导航栏登录/登出按钮
+  const authOpenBtn = document.getElementById('auth-open');
+  if (authOpenBtn) authOpenBtn.onclick = function() { if (auth) auth.open('login'); };
+  const authLogoutBtn = document.getElementById('auth-logout');
+  if (authLogoutBtn) authLogoutBtn.onclick = function() {
+    try { fetch(API + '/api/logout?cid=' + getCid()); } catch (e) {}
+    setAuthed(false);
+    toast('已退出登录。');
+  };
   // 页头注册/登录入口
   document.addEventListener('click', function(e) {
     const b = e.target.closest ? e.target.closest('.auth-entry') : null;
