@@ -113,8 +113,9 @@ _数据生成时间：{s.get('generated_at', '')[:16]}_
 │   ├── scrape.py          # 抓取公开列表新增曲目（断点续爬）
 │   ├── classify.py        # 分类：单曲/串烧 + 中文/英文 + 统计
 │   ├── clean_bad.py       # 清洗空文件名/零大小脏数据，重算统计
-│   ├── build_site.py      # 静态站点生成器（HTML/CSS/JS/数据/PWA）
-│   └── update_readme.py   # 刷新 README 数据概览（本脚本）
+│   ├── build_site.py      # 静态站点生成器（HTML/CSS/JS/数据/PWA/双API注入）
+│   ├── update_readme.py   # 刷新 README 数据概览（本脚本）
+│   └── enrich_sources.py  # 可选：手动补充来源直连音频地址（不参与流水线）
 ├── data/                  # 流水线数据（raw_tracks.csv / stats.json / 状态文件）
 ├── pwa-assets/            # PWA 清单、Service Worker 模板、图标
 ├── site/                  # 构建产物 → 部署到 GitHub Pages
@@ -162,7 +163,7 @@ python -m http.server 8000
 ## 部署
 
 1. **GitHub Pages**：仓库 Settings → Pages → Source 选择 *Deploy from a branch* → `main`（`site/` 为部署内容目录）。
-2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定），前端 `API_BASE` 指向代理域名（由 `build_site.py` 在构建时写入；本地构建自动使用空值走 localhost）。
+2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定）。前端内置**双 API 自动选择**：优先 `api.9gdj.com` 自定义域（国内网络可达），`*.workers.dev` 兜底（海外访问）；启动时并发健康探测自动选取可用端点。本地构建自动使用空值走 localhost（本地模式不请求代理）。
 
 ## 技术栈
 
