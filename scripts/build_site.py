@@ -635,10 +635,10 @@ footer {
 .auth-overlay.show { display: flex; }
 .auth-modal {
   width: min(420px, 92vw);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+  background: linear-gradient(160deg, rgba(20,26,42,.96), rgba(10,14,24,.98));
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.65), 0 0 32px rgba(124,58,237,.18);
   overflow: hidden;
   animation: authIn 0.22s ease-out;
 }
@@ -687,6 +687,7 @@ footer {
 .auth-tab.on {
   color: var(--accent);
   border-bottom-color: var(--accent);
+  text-shadow: 0 0 12px rgba(124,58,237,.45);
 }
 .auth-body { padding: 18px 20px 22px; }
 .auth-field { margin-bottom: 13px; }
@@ -707,22 +708,26 @@ footer {
   outline: none;
   transition: border-color 0.15s;
 }
-.auth-field input:focus { border-color: var(--accent); }
+.auth-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+}
 .auth-submit {
   width: 100%;
   padding: 11px 0;
   border: none;
-  border-radius: 9px;
-  background: var(--accent);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #7c3aed, #06b6d4);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   margin-top: 6px;
-  transition: background 0.15s, opacity 0.15s;
+  box-shadow: 0 4px 18px rgba(124,58,237,.3);
+  transition: opacity 0.15s, transform 0.15s;
 }
-.auth-submit:hover { background: var(--accent-hover); }
-.auth-submit:disabled { opacity: 0.55; cursor: wait; }
+.auth-submit:hover { transform: translateY(-1px); }
+.auth-submit:disabled { opacity: 0.55; cursor: wait; transform: none; }
 .auth-note {
   margin-top: 13px;
   font-size: 0.78rem;
@@ -1892,7 +1897,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       const btn = document.getElementById('auth-submit-register');
       busy(btn, true);
       try {{
-        const r = await fetch(API + '/api/register', {{method: 'POST', headers: {{'Content-Type': 'application/json', 'X-Client-Id': getCid()}}, body: JSON.stringify({{name: name, email: email, password: pass}})}});
+        const r = await fetch(API + '/api/register?cid=' + getCid(), {{method: 'POST', headers: {{'Content-Type': 'application/json', 'X-Client-Id': getCid()}}, body: JSON.stringify({{name: name, email: email, password: pass}})}});
         const d = await r.json();
         if (d.ok) {{ setAuthed(true, d.name); close(); toast('注册成功，已自动登录。'); }}
         else setNote('auth-note-register', d.msg || '注册失败，请稍后重试。');
@@ -1906,7 +1911,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       const btn = document.getElementById('auth-submit-login');
       busy(btn, true);
       try {{
-        const r = await fetch(API + '/api/login', {{method: 'POST', headers: {{'Content-Type': 'application/json', 'X-Client-Id': getCid()}}, body: JSON.stringify({{email: email, password: pass}})}});
+        const r = await fetch(API + '/api/login?cid=' + getCid(), {{method: 'POST', headers: {{'Content-Type': 'application/json', 'X-Client-Id': getCid()}}, body: JSON.stringify({{email: email, password: pass}})}});
         const d = await r.json();
         if (d.ok) {{ setAuthed(true, d.name); close(); toast('登录成功。'); }}
         else setNote('auth-note-login', d.msg || '登录失败，请稍后重试。');
@@ -2212,17 +2217,17 @@ def apply_html_patches(html):
     a1 = ("<nav style=\"gap:2px;\">\n"
           "                <span class=\"auth-entry\" style=\"color:#7cf59c;font-weight:600;\" id=\"auth-auto\">🔓 自动授权已开启</span>\n"
           "            </nav>")
-    n1 = ("<nav style=\"gap:2px;align-items:center;\">\n"
-          "                <span style=\"color:#7cf59c;font-weight:600;\" id=\"auth-auto\">🔓 自动授权已开启</span>\n"
-          "                <span style=\"color:#ffd75e;font-weight:600;display:none;\" id=\"auth-user\"></span>\n"
-          "                <button type=\"button\" id=\"auth-open\" style=\"background:linear-gradient(135deg,#8a2be2,#00bfff);border:none;color:#fff;border-radius:14px;padding:4px 12px;font-size:0.75rem;cursor:pointer;\">登录 / 注册</button>\n"
-          "                <button type=\"button\" id=\"auth-logout\" style=\"background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#ff9d9d;border-radius:14px;padding:4px 10px;font-size:0.72rem;cursor:pointer;display:none;\">登出</button>\n"
+    n1 = ("<nav style=\"gap:4px;align-items:center;flex-wrap:wrap;\">\n"
+          "                <span id=\"auth-auto\" style=\"display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;\">🔓 自动授权已开启</span>\n"
+          "                <span id=\"auth-user\" style=\"display:none;background:linear-gradient(135deg,rgba(255,215,94,.18),rgba(255,170,60,.14));border:1px solid rgba(255,215,94,.5);color:#ffd75e;font-weight:700;border-radius:999px;padding:3px 12px;font-size:0.72rem;\"></span>\n"
+          "                <button type=\"button\" id=\"auth-open\" style=\"background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 14px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;\">登录 / 注册</button>\n"
+          "                <button type=\"button\" id=\"auth-logout\" style=\"background:rgba(255,255,255,.06);border:1px solid rgba(255,120,120,.4);color:#ff9d9d;border-radius:999px;padding:4px 12px;font-size:0.72rem;cursor:pointer;display:none;\">退出</button>\n"
           "            </nav>")
     if html.count(a1) == 1:
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20260926b\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20260929\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
