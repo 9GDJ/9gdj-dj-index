@@ -1,4 +1,41 @@
-# 9GDJ DJ Index
+# -*- coding: utf-8 -*-
+"""
+Update README.md with live stats from data/stats.json.
+Run after build_site.py (GitHub Actions + local).
+Generates a GitHub-style Chinese README; data table is rebuilt on every run.
+"""
+import json
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATS = os.path.join(ROOT, "data", "stats.json")
+README = os.path.join(ROOT, "README.md")
+
+with open(STATS, encoding="utf-8") as f:
+    s = json.load(f)
+
+fmt = s.get("format", {})
+lang = s.get("language", {})
+combo = s.get("combo", {})
+
+rows = [
+    ("曲目总数", f"**{s.get('total', 0):,}**"),
+    ("单曲", f"{fmt.get('single', 0):,}"),
+    ("串烧", f"{fmt.get('mashup', 0):,}"),
+    ("中文", f"{lang.get('zh', 0):,}"),
+    ("英文", f"{lang.get('en', 0):,}"),
+    ("其他", f"{lang.get('other', 0):,}"),
+    ("中文单曲", f"{combo.get('zh_single', 0):,}"),
+    ("英文单曲", f"{combo.get('en_single', 0):,}"),
+    ("中文串烧", f"{combo.get('zh_mashup', 0):,}"),
+    ("英文串烧", f"{combo.get('en_mashup', 0):,}"),
+    ("入库日期范围", f"{s.get('earliest_date', '')} ~ {s.get('latest_date', '')}（{s.get('date_count', 0)} 天）"),
+    ("今日新增", f"{s.get('today_count', 0)}（{s.get('today', '')}）"),
+    ("串烧大小阈值", f"\u2265 {s.get('size_threshold_mib', 100.0):g} MiB"),
+]
+table = "\n".join(f"| {k} | {v} |" for k, v in rows)
+
+readme = f"""# 9GDJ DJ Index
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-222222?logo=github&logoColor=white)](https://9gdj.com/9gdj-dj-index/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -40,23 +77,11 @@
 
 ## 数据概览
 
-_数据生成时间：2026-09-29T22:09_
+_数据生成时间：{s.get('generated_at', '')[:16]}_
 
 | 指标 | 数值 |
 |---|---|
-| 曲目总数 | **91,257** |
-| 单曲 | 89,673 |
-| 串烧 | 1,584 |
-| 中文 | 77,692 |
-| 英文 | 13,546 |
-| 其他 | 19 |
-| 中文单曲 | 76,115 |
-| 英文单曲 | 13,539 |
-| 中文串烧 | 1,577 |
-| 英文串烧 | 7 |
-| 入库日期范围 | 2024-09-20 ~ 2026-09-29（706 天） |
-| 今日新增 | 30（2026-09-29） |
-| 串烧大小阈值 | ≥ 100 MiB |
+{table}
 
 ## 分类规则
 
@@ -72,7 +97,7 @@ _数据生成时间：2026-09-29T22:09_
 
 ### 中文 / 英文
 
-- 文件名含中文字符（Unicode `\u4e00-\u9fff`）→ **中文**
+- 文件名含中文字符（Unicode `\\u4e00-\\u9fff`）→ **中文**
 - 否则含拉丁字母（A-Za-z）→ **英文**
 - 两者均无 → **其他**
 
@@ -150,3 +175,9 @@ python -m http.server 8000
 ## License
 
 MIT
+"""
+
+with open(README, "w", encoding="utf-8", newline="\n") as f:
+    f.write(readme)
+
+print(f"README updated: {s.get('total', 0):,} tracks, {s.get('date_count', 0)} days")
