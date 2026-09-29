@@ -2188,7 +2188,6 @@ def apply_js_patches(js):
           "    };\n"
           "    fetch(API + '/api/session?cid=' + getCid()).then(function(r) { return r.json(); }).then(function(d) {\n"
           "      if (d && d.ok && d.name && !d.auto) showUser(d.name);\n"
-          "      else if (d && d.ok && d.name) showAuto('🔓 自动授权已开启（' + d.name + '）');\n"
           "      else showAuto('🔓 自动授权已开启');\n"
           "    }).catch(function() { showAuto('🔓 自动授权已开启'); });\n"
           "  }")
