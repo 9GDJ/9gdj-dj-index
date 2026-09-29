@@ -709,8 +709,8 @@
   }
 
   // ── 登录态（本地标记；官方页完成登录后确认）──
-  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；GitHub Pages 部署时填后端地址）
-  const API = window.API_BASE || '';
+  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；线上自动测速选择 api.9gdj.com / workers.dev）
+  let API = window.API_BASE || '';
   function getCid() {
     let c = localStorage.getItem('panda_cid');
     if (!c) {
@@ -1086,6 +1086,8 @@
 
   // ── 初始化 ──
   window.addEventListener('DOMContentLoaded', async () => {
+    // 双 API 自动选择：api.9gdj.com（国内可达）优先，workers.dev 兜底
+    if (window.resolveApi) { await window.resolveApi(); API = window.API_BASE; }
     setupSearch();
     refreshAuthUI();
     // 校验后台会话（服务重启后自动登出）
