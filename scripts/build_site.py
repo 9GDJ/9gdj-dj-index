@@ -1678,8 +1678,8 @@ def generate_js(total_tracks, page_size, latest_ids):
   }}
 
   // ── 登录态（本地标记；官方页完成登录后确认）──
-  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；GitHub Pages 部署时填后端地址）
-  const API = window.API_BASE || '';
+  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；线上自动测速选择 api.9gdj.com / workers.dev）
+  let API = window.API_BASE || '';
   function getCid() {{
     let c = localStorage.getItem('panda_cid');
     if (!c) {{
@@ -2025,6 +2025,8 @@ def generate_js(total_tracks, page_size, latest_ids):
 
   // ── 初始化 ──
   window.addEventListener('DOMContentLoaded', async () => {{
+    // 双 API 自动选择：api.9gdj.com（国内可达）优先，workers.dev 兜底
+    if (window.resolveApi) {{ await window.resolveApi(); API = window.API_BASE; }}
     setupSearch();
     refreshAuthUI();
     // 校验后台会话（服务重启后自动登出）
@@ -2087,7 +2089,24 @@ def generate_html(stats, latest_tracks):
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <script>window.API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? '' : 'https://9gdj-proxy.114155125.workers.dev';</script>
+    <script>
+        // 双 API 候选：api.9gdj.com（国内可达）优先，workers.dev 兜底；本地同源模式保持空
+        window.API_CANDIDATES = ['https://api.9gdj.com', 'https://9gdj-proxy.114155125.workers.dev'];
+        window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : window.API_CANDIDATES[0];
+        window.resolveApi = async function () {{
+          if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {{ window.API_BASE = ''; return ''; }}
+          try {{
+            const rs = await Promise.all(window.API_CANDIDATES.map(function (b) {{
+              return fetch(b + '/api/health', {{ cache: 'no-store', signal: AbortSignal.timeout(4000) }})
+                .then(function (r) {{ return {{ b: b, ok: r.ok, ms: performance.now() }}; }})
+                .catch(function () {{ return {{ b: b, ok: false, ms: 1e9 }}; }});
+            }}));
+            const ok = rs.filter(function (x) {{ return x.ok; }}).sort(function (a, b) {{ return a.ms - b.ms; }});
+            if (ok.length) window.API_BASE = ok[0].b;
+          }} catch (e) {{}}
+          return window.API_BASE;
+        }};
+    </script>
     <script>window.__LATEST__ = {latest_min_json};</script>
     <header>
         <div class="header-inner">
