@@ -85,37 +85,48 @@ nav a:hover, nav a.active {
   color: var(--accent);
 }
 
+/* ── 搜索栏（主区顶部居中，科技胶囊风）── */
 .search-box {
-  margin-left: auto;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto 24px;
   display: flex;
-  gap: 8px;
-  flex: 1;
-  max-width: 360px;
-  min-width: 200px;
+  gap: 10px;
 }
 .search-box input {
   flex: 1;
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  min-width: 0;
+  padding: 12px 18px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  background: rgba(13, 18, 32, 0.9);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.15s;
+  transition: all 0.2s;
 }
-.search-box input:focus { border-color: var(--accent); }
+.search-box input::placeholder { color: var(--text-faint); }
+.search-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), 0 0 18px rgba(16, 185, 129, 0.18);
+}
 .search-box button {
-  padding: 8px 18px;
+  padding: 12px 26px;
   border: none;
-  border-radius: 8px;
-  background: var(--accent);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s;
+  font-family: inherit;
 }
-.search-box button:hover { background: var(--accent-hover); }
+.search-box button:hover {
+  background: linear-gradient(135deg, #0d9e6f, #0598b4);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
 
 /* ── Main ── */
 main {
@@ -782,7 +793,7 @@ footer {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .header-inner { padding: 10px 14px; gap: 10px; }
-  .search-box { max-width: 100%; order: 3; }
+  .search-box { max-width: 100%; margin-bottom: 16px; }
   main { padding: 16px 12px 40px; }
   .track-table .col-id, .track-table .col-tags { display: none; }
   .track-table th, .track-table td { padding: 8px 10px; font-size: 0.82rem; }
@@ -812,6 +823,9 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 8px; }
   main { padding: 12px 8px 70px; }
+  .search-box { gap: 8px; margin-bottom: 14px; }
+  .search-box input { padding: 11px 12px; font-size: 0.85rem; border-radius: 10px; }
+  .search-box button { padding: 11px 16px; font-size: 0.85rem; border-radius: 10px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
   .track-table .col-time { display: none; }
   .track-table th, .track-table td { padding: 6px 6px; font-size: 0.75rem; }
