@@ -124,12 +124,15 @@ main {
   padding: 24px 20px 60px;
 }
 
-/* ── Stats Cards ── */
+/* ── Stats Cards（固定列数保证对称：6 / 3 / 3 / 2，均能整除 6）── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 14px;
   margin-bottom: 28px;
+}
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 .stat-card {
   background: var(--bg-card);
@@ -166,12 +169,15 @@ main {
   border-radius: 2px;
 }
 
-/* ── Category Grid ── */
+/* ── Category Grid（6 卡对称：3 / 2 列）── */
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 28px;
+}
+@media (max-width: 1100px) {
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .cat-card {
   background: var(--bg-card);
@@ -203,10 +209,13 @@ main {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 .track-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }
@@ -835,7 +844,7 @@ footer {
 @media (max-width: 620px) {
   /* 表格 → 卡片流 */
   .track-table-wrap { overflow: visible; }
-  .track-table, .track-table thead, .track-table tbody, .track-table tr, .track-table td { display: block; width: 100%; box-sizing: border-box; }
+  .track-table, .track-table thead, .track-table tbody, .track-table tr, .track-table td { display: block; width: 100%; min-width: 0 !important; box-sizing: border-box; }
   .track-table thead { display: none; }
   .track-table tr { position: relative; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; padding: 12px 12px 12px 46px; background: var(--bg-card); }
   .track-table tr:hover { background: var(--bg-card); }
