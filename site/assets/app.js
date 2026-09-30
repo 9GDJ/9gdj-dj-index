@@ -33,7 +33,13 @@
   }
 
   function setQuery(params) {
-    const qs = new URLSearchParams(params).toString();
+    const sp = new URLSearchParams();
+    for (const k in params) {
+      const v = params[k];
+      if (v === '' || v === null || v === undefined) continue;
+      sp.set(k, v);
+    }
+    const qs = sp.toString();
     const url = qs ? '?' + qs : window.location.pathname;
     window.history.pushState({}, '', url);
   }
@@ -825,19 +831,25 @@
     }).catch(function() { showAuto('🔓 自动授权已开启'); });
   }
 
-  // ── 搜索（输入实时搜索 + 300ms 防抖，避免高频路由/渲染）──
+  // ── 搜索（输入实时搜索 + 300ms 防抖 + 清除按钮）──
   function setupSearch() {
     const input = $('#search-input');
     const btn = $('#search-btn');
+    const clear = $('#search-clear');
     let t = null;
+    function syncClear() {
+      if (clear) clear.classList.toggle('show', input.value.length > 0);
+    }
     function doSearch() {
       const val = input.value.trim();
+      syncClear();
       if (val) {
         setQuery({q: val, page: 1});
         route();
       }
     }
     function onInput() {
+      syncClear();
       clearTimeout(t);
       t = setTimeout(function() {
         const val = input.value.trim();
@@ -845,11 +857,22 @@
         if (val && val !== cur) doSearch();
       }, 300);
     }
+    if (clear) clear.onclick = function() {
+      input.value = '';
+      syncClear();
+      input.focus();
+      const cur = new URLSearchParams(window.location.search).get('q');
+      if (cur) {
+        setQuery({q: '', page: 1});
+        route();
+      }
+    };
     btn.onclick = doSearch;
     input.addEventListener('input', onInput);
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') { clearTimeout(t); doSearch(); }
     });
+    syncClear();
   }
 
   // ── 页内波纹播放器（科技风可视化；音频流对接音频接口，需登录）──
