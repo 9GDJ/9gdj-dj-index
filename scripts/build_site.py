@@ -659,6 +659,22 @@ body { padding-bottom: 76px; }
   color: var(--text-dim);
   font-size: 0.85rem;
 }
+.recent-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.recent-hint a { color: var(--accent); font-weight: 600; cursor: pointer; }
 
 /* ── Footer ── */
 footer {
@@ -1138,7 +1154,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     return '';
   }}
   function ensureTracks(fmt, lang) {{
-    if (LOCAL_MODE) return Promise.resolve(null);
     const file = splitFileName(fmt, lang);
     if (file) {{
       if (SPLIT_CACHE[file]) return Promise.resolve(SPLIT_CACHE[file]);
@@ -1157,9 +1172,27 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
     return TRACKS_PROMISE;
   }}
+  // 最近 30 天轻量数据（列表首屏秒开；翻页越界/搜索/日期再拉全量）
+  let RECENT = null;
+  let RECENT_PROMISE = null;
+  let FORCE_FULL = false;
+  function ensureRecent() {{
+    if (RECENT) return Promise.resolve(RECENT);
+    if (!RECENT_PROMISE) {{
+      RECENT_PROMISE = fetchData('data/tracks-recent.json')
+        .then(t => {{ RECENT = t; return t; }})
+        .catch(e => {{ RECENT_PROMISE = null; throw e; }});
+    }}
+    return RECENT_PROMISE;
+  }}
+
   function findTrackById(id) {{
     if (ALL_TRACKS) {{
       const t = ALL_TRACKS.find(x => String(x.i) === String(id));
+      if (t) return Promise.resolve(t);
+    }}
+    if (RECENT) {{
+      const t = RECENT.find(x => String(x.i) === String(id));
       if (t) return Promise.resolve(t);
     }}
     for (const k in SPLIT_CACHE) {{
@@ -1334,9 +1367,25 @@ def generate_js(total_tracks, page_size, latest_ids):
   async function renderList() {{
     const q = getQuery();
     const m = $('#main');
+    const page = parseInt(q.page) || 1;
     const splitFile = splitFileName(q.format, q.lang);
-    if (!ALL_TRACKS && !SPLIT_CACHE[splitFile]) showLoading('正在加载曲目数据...');
-    try {{ await ensureTracks(q.format, q.lang); }} catch (e) {{ showLoading('数据加载失败: ' + e.message); return; }}
+    // 首屏优先最近 30 天轻量数据（秒开）；搜索/日期/强制全部/翻页越界才拉全量
+    let usingRecent = false;
+    if (q.q || q.date || FORCE_FULL) {{
+      await ensureTracks(q.format, q.lang);
+    }} else {{
+      try {{
+        await ensureRecent();
+        const recentPages = Math.max(1, Math.ceil(RECENT.length / PAGE_SIZE));
+        if (page <= recentPages) {{
+          usingRecent = true;
+        }} else {{
+          await ensureTracks(q.format, q.lang);
+        }}
+      }} catch (e) {{
+        await ensureTracks(q.format, q.lang);
+      }}
+    }}
     m.innerHTML = '';
 
     // 面包屑
@@ -1351,8 +1400,8 @@ def generate_js(total_tracks, page_size, latest_ids):
     bc.appendChild(el('span', {{text: title}}));
     m.appendChild(bc);
 
-    // 过滤（format/lang 视图用分片数据，其余用全量）
-    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];
+    // 过滤（recent 首屏数据 / format/lang 分片 / 全量）
+    let result = usingRecent ? RECENT : (ALL_TRACKS || SPLIT_CACHE[splitFile] || []);
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
     if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
@@ -1383,11 +1432,19 @@ def generate_js(total_tracks, page_size, latest_ids):
     langSel.onchange = () => {{ const nq = getQuery(); nq.lang = langSel.value; if(!nq.lang) delete nq.lang; nq.page=1; setQuery(nq); renderList(); }};
     bar.appendChild(langSel);
 
-    bar.appendChild(el('span', {{class: 'result-count', text: '共 ' + result.length.toLocaleString() + ' 条'}}));
+    bar.appendChild(el('span', {{class: 'result-count', text: (usingRecent ? '最近 30 天 · 共 ' : '共 ') + result.length.toLocaleString() + ' 条'}}));
     m.appendChild(bar);
 
+    // 最近模式提示条（可一键加载全部历史）
+    if (usingRecent) {{
+      const hint = el('div', {{class: 'recent-hint'}});
+      hint.innerHTML = '当前显示最近 30 天入库曲目 · <a href="javascript:;" id="load-full">加载全部历史</a>';
+      const lf = hint.querySelector('#load-full');
+      lf.onclick = function () {{ FORCE_FULL = true; renderList(); }};
+      m.appendChild(hint);
+    }}
+
     // 分页
-    const page = parseInt(q.page) || 1;
     const start = (page - 1) * PAGE_SIZE;
     const pageTracks = result.slice(start, start + PAGE_SIZE);
     renderTrackTable(pageTracks, m);
@@ -2513,6 +2570,22 @@ def main():
             json.dump(arr, f, ensure_ascii=False, separators=(",", ":"))
         sz = os.path.getsize(os.path.join(SITE_DIR, "data", f"tracks-{fmt_name}.json")) / 1024 / 1024
         print(f"  tracks-{fmt_name}.json: {sz:.1f} MB ({len(arr):,} 条)")
+
+    # 最近 30 天轻量数据（列表首屏秒开；历史/搜索按需拉全量）
+    recent = []
+    now_dt = datetime.now()
+    for t in minimal:
+        d = t.get("d") or ""
+        if d:
+            try:
+                if (now_dt - datetime.strptime(d, "%Y-%m-%d")).days <= 30:
+                    recent.append(t)
+            except ValueError:
+                pass
+    with open(os.path.join(SITE_DIR, "data", "tracks-recent.json"), "w", encoding="utf-8") as f:
+        json.dump(recent, f, ensure_ascii=False, separators=(",", ":"))
+    sz = os.path.getsize(os.path.join(SITE_DIR, "data", "tracks-recent.json")) / 1024
+    print(f"  tracks-recent.json: {sz:.0f} KB ({len(recent):,} 条)")
 
     # 2. 统计数据
     with open(os.path.join(SITE_DIR, "data", "stats.json"), "w", encoding="utf-8") as f:
