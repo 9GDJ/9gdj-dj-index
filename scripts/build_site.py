@@ -164,37 +164,40 @@ nav a:hover, nav a.active {
   color: var(--accent);
 }
 
-/* ── 搜索栏（主区顶部居中 · 一体发光面板）── */
+/* ── 搜索栏（与 Header 玻璃质感同源 · 一体发光面板）── */
 .search-box {
-  max-width: 640px;
+  max-width: 680px;
   width: 100%;
-  margin: 0 auto 24px;
+  margin: 0 auto 26px;
   display: flex;
   align-items: center;
-  background: rgba(13, 18, 32, 0.72);
-  border: 1px solid rgba(16, 185, 129, 0.22);
-  border-radius: 16px;
-  padding: 6px 6px 6px 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: rgba(24, 27, 33, 0.82);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 14px;
+  padding: 7px 7px 7px 18px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .search-box:focus-within {
-  border-color: rgba(16, 185, 129, 0.55);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 24px rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(28, 32, 40, 0.92);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.13), 0 10px 34px rgba(0, 0, 0, 0.4), 0 0 26px rgba(16, 185, 129, 0.18);
 }
 .search-icon {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  margin-right: 10px;
+  margin-right: 12px;
   color: var(--text-faint);
+  transition: color 0.2s;
 }
+.search-box:focus-within .search-icon { color: var(--accent); }
 .search-box input {
   flex: 1;
   min-width: 0;
-  padding: 12px 4px;
+  padding: 13px 6px;
   border: none;
   background: transparent;
   color: var(--text);
@@ -202,10 +205,30 @@ nav a:hover, nav a.active {
   outline: none;
 }
 .search-box input::placeholder { color: var(--text-faint); }
-.search-box button {
-  padding: 12px 28px;
+.search-clear {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0 4px;
   border: none;
-  border-radius: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-faint);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.search-clear:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
+.search-clear.show { display: flex; }
+.search-box button {
+  padding: 13px 30px;
+  border: none;
+  border-radius: 10px;
   background: linear-gradient(135deg, #10b981, #06b6d4);
   color: #fff;
   font-size: 0.95rem;
@@ -213,12 +236,14 @@ nav a:hover, nav a.active {
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  white-space: nowrap;
 }
 .search-box button:hover {
   background: linear-gradient(135deg, #0d9e6f, #0598b4);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.42);
   transform: translateY(-1px);
 }
+.search-box button:active { transform: translateY(0); }
 
 /* ── Main ── */
 main {
@@ -915,11 +940,12 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 8px; }
   main { padding: 12px 8px 70px; }
-  .search-box { gap: 0; margin-bottom: 14px; padding: 5px 5px 5px 12px; border-radius: 13px; }
+  .search-box { gap: 0; margin-bottom: 16px; padding: 6px 6px 6px 14px; border-radius: 13px; }
   .search-icon { margin-right: 8px; }
   .search-icon svg { width: 16px; height: 16px; }
-  .search-box input { padding: 11px 2px; font-size: 0.85rem; }
-  .search-box button { padding: 11px 18px; font-size: 0.85rem; border-radius: 10px; }
+  .search-box input { padding: 12px 2px; font-size: 0.85rem; }
+  .search-clear { width: 24px; height: 24px; font-size: 0.95rem; margin: 0 2px; }
+  .search-box button { padding: 12px 16px; font-size: 0.82rem; border-radius: 10px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
   .track-table .col-time { display: none; }
   .track-table th, .track-table td { padding: 6px 6px; font-size: 0.75rem; }
@@ -1053,7 +1079,13 @@ def generate_js(total_tracks, page_size, latest_ids):
   }}
 
   function setQuery(params) {{
-    const qs = new URLSearchParams(params).toString();
+    const sp = new URLSearchParams();
+    for (const k in params) {{
+      const v = params[k];
+      if (v === '' || v === null || v === undefined) continue;
+      sp.set(k, v);
+    }}
+    const qs = sp.toString();
     const url = qs ? '?' + qs : window.location.pathname;
     window.history.pushState({{}}, '', url);
   }}
@@ -1773,19 +1805,25 @@ def generate_js(total_tracks, page_size, latest_ids):
     // 昵称显示模块已移除（仅保留自动授权标识）
   }}
 
-  // ── 搜索（输入实时搜索 + 300ms 防抖，避免高频路由/渲染）──
+  // ── 搜索（输入实时搜索 + 300ms 防抖 + 清除按钮）──
   function setupSearch() {{
     const input = $('#search-input');
     const btn = $('#search-btn');
+    const clear = $('#search-clear');
     let t = null;
+    function syncClear() {{
+      if (clear) clear.classList.toggle('show', input.value.length > 0);
+    }}
     function doSearch() {{
       const val = input.value.trim();
+      syncClear();
       if (val) {{
         setQuery({{q: val, page: 1}});
         route();
       }}
     }}
     function onInput() {{
+      syncClear();
       clearTimeout(t);
       t = setTimeout(function() {{
         const val = input.value.trim();
@@ -1793,11 +1831,22 @@ def generate_js(total_tracks, page_size, latest_ids):
         if (val && val !== cur) doSearch();
       }}, 300);
     }}
+    if (clear) clear.onclick = function() {{
+      input.value = '';
+      syncClear();
+      input.focus();
+      const cur = new URLSearchParams(window.location.search).get('q');
+      if (cur) {{
+        setQuery({{q: '', page: 1}});
+        route();
+      }}
+    }};
     btn.onclick = doSearch;
     input.addEventListener('input', onInput);
     input.addEventListener('keydown', e => {{
       if (e.key === 'Enter') {{ clearTimeout(t); doSearch(); }}
     }});
+    syncClear();
   }}
 
   // ── 页内波纹播放器（科技风可视化；音频流对接音频接口，需登录）──
@@ -2208,6 +2257,7 @@ def generate_html(stats, latest_tracks):
     <div class="search-box">
         <span class="search-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
         <input type="text" id="search-input" placeholder="搜索曲目名（支持名称 / DJ / 版本关键词）...">
+        <button type="button" id="search-clear" class="search-clear" aria-label="清空搜索" title="清空搜索">×</button>
         <button id="search-btn">搜索</button>
     </div>
     <main id="main">
