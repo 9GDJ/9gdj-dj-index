@@ -50,7 +50,7 @@ def load_data():
 
 
 def build_minimal_tracks(tracks):
-    """精简字段以减小 JSON 体积。"""
+    """精简字段以减小 JSON 体积（不再输出直连地址 au，播放/下载统一走后端代理）。"""
     out = []
     for t in tracks:
         out.append({
@@ -62,7 +62,6 @@ def build_minimal_tracks(tracks):
             "l": {"zh": 0, "en": 1, "other": 2}.get(t.get("language"), 2),
             "d": t.get("date") or "",
             "u": t.get("source_url") or "",
-            "au": t.get("audio_url") or "",
         })
     return out
 
@@ -1076,9 +1075,28 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
   }}
 
-  // 懒加载全量曲目数据（首次需要时拉取，之后缓存于内存）
+  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en|other]/mashup.json），否则拉全量（搜索/全部）
   let TRACKS_PROMISE = null;
-  function ensureTracks() {{
+  const SPLIT_CACHE = {{}};
+  function splitFileName(fmt, lang) {{
+    if (fmt === 'single' && lang) return 'data/tracks-single-' + lang + '.json';
+    if (fmt === 'single') return 'data/tracks-single.json';
+    if (fmt === 'mashup') return 'data/tracks-mashup.json';
+    return '';
+  }}
+  function ensureTracks(fmt, lang) {{
+    if (LOCAL_MODE) return Promise.resolve(null);
+    const file = splitFileName(fmt, lang);
+    if (file) {{
+      if (SPLIT_CACHE[file]) return Promise.resolve(SPLIT_CACHE[file]);
+      if (!SPLIT_CACHE['p-' + file]) {{
+        SPLIT_CACHE['p-' + file] = fetch(file)
+          .then(r => r.json())
+          .then(t => {{ SPLIT_CACHE[file] = t; return t; }})
+          .catch(e => {{ SPLIT_CACHE['p-' + file] = null; throw e; }});
+      }}
+      return SPLIT_CACHE['p-' + file];
+    }}
     if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);
     if (!TRACKS_PROMISE) {{
       TRACKS_PROMISE = fetch('data/tracks.json')
@@ -1091,6 +1109,10 @@ def generate_js(total_tracks, page_size, latest_ids):
   function findTrackById(id) {{
     if (ALL_TRACKS) {{
       const t = ALL_TRACKS.find(x => String(x.i) === String(id));
+      if (t) return Promise.resolve(t);
+    }}
+    for (const k in SPLIT_CACHE) {{
+      const t = SPLIT_CACHE[k] && SPLIT_CACHE[k].find ? SPLIT_CACHE[k].find(x => String(x.i) === String(id)) : null;
       if (t) return Promise.resolve(t);
     }}
     const lt = window.__LATEST__ || [];
@@ -1261,8 +1283,9 @@ def generate_js(total_tracks, page_size, latest_ids):
   async function renderList() {{
     const q = getQuery();
     const m = $('#main');
-    if (!ALL_TRACKS) showLoading('正在加载曲目数据...');
-    try {{ await ensureTracks(); }} catch (e) {{ showLoading('数据加载失败: ' + e.message); return; }}
+    const splitFile = splitFileName(q.format, q.lang);
+    if (!ALL_TRACKS && !SPLIT_CACHE[splitFile]) showLoading('正在加载曲目数据...');
+    try {{ await ensureTracks(q.format, q.lang); }} catch (e) {{ showLoading('数据加载失败: ' + e.message); return; }}
     m.innerHTML = '';
 
     // 面包屑
@@ -1277,8 +1300,8 @@ def generate_js(total_tracks, page_size, latest_ids):
     bc.appendChild(el('span', {{text: title}}));
     m.appendChild(bc);
 
-    // 过滤
-    let result = ALL_TRACKS;
+    // 过滤（format/lang 视图用分片数据，其余用全量）
+    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
     if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
@@ -2072,7 +2095,6 @@ def generate_html(stats, latest_tracks):
             "f": 1 if t.get("format") == "mashup" else 0,
             "l": {"zh": 0, "en": 1}.get(t.get("language"), 2),
             "u": t.get("source_url", ""),
-            "au": t.get("audio_url", "")
         })
     latest_min_json = json.dumps(latest_min, ensure_ascii=False)
 
@@ -2155,11 +2177,7 @@ def apply_js_patches(js):
     n1 = "  let ALL_TRACKS = null;\n  const LOCAL_MODE = (window.API_BASE === '');"
     if js.count(a1) == 1:
         js = js.replace(a1, n1)
-    # 2) ensureTracks 本地短路
-    a2 = "  function ensureTracks() {\n    if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);"
-    n2 = "  function ensureTracks() {\n    if (LOCAL_MODE) return Promise.resolve(null);\n    if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);"
-    if js.count(a2) == 1:
-        js = js.replace(a2, n2)
+    # 2) ensureTracks 已内建 LOCAL_MODE 短路与分片逻辑（模板内实现），无需补丁
     # 3) findTrackById 本地分支
     a3 = "  function findTrackById(id) {\n    if (ALL_TRACKS) {"
     n3 = ("  function findTrackById(id) {\n"
@@ -2170,7 +2188,7 @@ def apply_js_patches(js):
     if js.count(a3) == 1:
         js = js.replace(a3, n3)
     # 4) renderList 本地分页分支
-    a4 = "    // 过滤\n    let result = ALL_TRACKS;"
+    a4 = "    // 过滤（format/lang 视图用分片数据，其余用全量）\n    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];"
     blk4 = ("    // 本地模式：列表/搜索/日期走 server 分页 API（避免加载 17MB 全量）\n"
             "    if (LOCAL_MODE) {\n"
             "      const params = new URLSearchParams();\n"
@@ -2219,8 +2237,8 @@ def apply_js_patches(js):
             "      } catch (e) { showLoading('数据加载失败: ' + e.message); return; }\n"
             "    }\n"
             "\n"
-            "    // 过滤\n"
-            "    let result = ALL_TRACKS;")
+            "    // 过滤（format/lang 视图用分片数据，其余用全量）\n"
+            "    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];")
     if js.count(a4) == 1:
         js = js.replace(a4, blk4)
     # 5) refreshAuthUI 补全（显示昵称）
@@ -2340,13 +2358,32 @@ def main():
     os.makedirs(os.path.join(SITE_DIR, "assets"), exist_ok=True)
     os.makedirs(os.path.join(SITE_DIR, "data"), exist_ok=True)
 
-    # 1. 精简曲目数据
+    # 1. 精简曲目数据（全量 + 按格式分片，前端列表按需加载）
     print("生成精简曲目数据...")
     minimal = build_minimal_tracks(tracks)
     with open(os.path.join(SITE_DIR, "data", "tracks.json"), "w", encoding="utf-8") as f:
         json.dump(minimal, f, ensure_ascii=False, separators=(",", ":"))
     tracks_size = os.path.getsize(os.path.join(SITE_DIR, "data", "tracks.json"))
     print(f"  tracks.json: {tracks_size / 1024 / 1024:.1f} MB")
+    single = [t for t in minimal if t["f"] == 0]
+    mashup = [t for t in minimal if t["f"] == 1]
+
+    def strip_u(arr):
+        # 分片剔除来源链接 u（详情页才需要；全量 tracks.json 保留）
+        return [{k: v for k, v in t.items() if k != "u"} for t in arr]
+
+    split_specs = [
+        ("single", strip_u(single), None),
+        ("single-zh", strip_u([t for t in single if t["l"] == 0]), None),
+        ("single-en", strip_u([t for t in single if t["l"] == 1]), None),
+        ("single-other", strip_u([t for t in single if t["l"] == 2]), None),
+        ("mashup", strip_u(mashup), None),
+    ]
+    for fmt_name, arr, _ in split_specs:
+        with open(os.path.join(SITE_DIR, "data", f"tracks-{fmt_name}.json"), "w", encoding="utf-8") as f:
+            json.dump(arr, f, ensure_ascii=False, separators=(",", ":"))
+        sz = os.path.getsize(os.path.join(SITE_DIR, "data", f"tracks-{fmt_name}.json")) / 1024 / 1024
+        print(f"  tracks-{fmt_name}.json: {sz:.1f} MB ({len(arr):,} 条)")
 
     # 2. 统计数据
     with open(os.path.join(SITE_DIR, "data", "stats.json"), "w", encoding="utf-8") as f:
