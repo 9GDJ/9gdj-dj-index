@@ -122,25 +122,25 @@ header {
 .header-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 .logo {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
 }
-.logo span { color: var(--text-dim); font-weight: 400; font-size: 0.85rem; }
+.logo span { color: var(--text-dim); font-weight: 400; font-size: 0.82rem; }
 nav { display: flex; gap: 6px; flex-wrap: wrap; }
 nav a {
-  padding: 6px 14px;
+  padding: 6px 11px;
   border-radius: 6px;
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   transition: all 0.15s;
 }
 nav a:hover, nav a.active {
@@ -164,32 +164,33 @@ nav a:hover, nav a.active {
   color: var(--accent);
 }
 
-/* ── 搜索栏（与 Header 玻璃质感同源 · 一体发光面板）── */
+/* ── 搜索栏（Header 内嵌紧凑 · 与导航同排 · 玻璃同源）── */
 .search-box {
-  max-width: 680px;
+  max-width: 260px;
   width: 100%;
-  margin: 0 auto 26px;
+  margin: 0;
   display: flex;
   align-items: center;
+  flex: 1 1 220px;
   background: rgba(24, 27, 33, 0.82);
   border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 14px;
-  padding: 7px 7px 7px 18px;
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-radius: 10px;
+  padding: 3px 3px 3px 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .search-box:focus-within {
   border-color: rgba(16, 185, 129, 0.6);
   background: rgba(28, 32, 40, 0.92);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.13), 0 10px 34px rgba(0, 0, 0, 0.4), 0 0 26px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12), 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 .search-icon {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-right: 8px;
   color: var(--text-faint);
   transition: color 0.2s;
 }
@@ -197,11 +198,11 @@ nav a:hover, nav a.active {
 .search-box input {
   flex: 1;
   min-width: 0;
-  padding: 13px 6px;
+  padding: 8px 4px;
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   outline: none;
 }
 .search-box input::placeholder { color: var(--text-faint); }
@@ -210,14 +211,14 @@ nav a:hover, nav a.active {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  margin: 0 4px;
+  width: 22px;
+  height: 22px;
+  margin: 0 2px;
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-faint);
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
   transition: all 0.2s;
@@ -226,12 +227,12 @@ nav a:hover, nav a.active {
 .search-clear:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
 .search-clear.show { display: flex; }
 .search-box button {
-  padding: 13px 30px;
+  padding: 8px 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #10b981, #06b6d4);
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -240,7 +241,7 @@ nav a:hover, nav a.active {
 }
 .search-box button:hover {
   background: linear-gradient(135deg, #0d9e6f, #0598b4);
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.42);
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 .search-box button:active { transform: translateY(0); }
@@ -940,12 +941,12 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 8px; }
   main { padding: 12px 8px 70px; }
-  .search-box { gap: 0; margin-bottom: 16px; padding: 6px 6px 6px 14px; border-radius: 13px; }
+  .search-box { max-width: none; flex: 1 1 100%; order: 5; margin-top: 2px; border-radius: 10px; padding: 3px 3px 3px 12px; }
   .search-icon { margin-right: 8px; }
   .search-icon svg { width: 16px; height: 16px; }
-  .search-box input { padding: 12px 2px; font-size: 0.85rem; }
-  .search-clear { width: 24px; height: 24px; font-size: 0.95rem; margin: 0 2px; }
-  .search-box button { padding: 12px 16px; font-size: 0.82rem; border-radius: 10px; }
+  .search-box input { padding: 9px 4px; font-size: 0.82rem; }
+  .search-clear { width: 22px; height: 22px; font-size: 0.9rem; margin: 0 2px; }
+  .search-box button { padding: 9px 14px; font-size: 0.8rem; border-radius: 8px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
   .track-table .col-time { display: none; }
   .track-table th, .track-table td { padding: 6px 6px; font-size: 0.75rem; }
@@ -2249,17 +2250,17 @@ def generate_html(stats, latest_tracks):
                 <a href="?format=single">单曲</a>
                 <a href="?format=mashup">串烧</a>
             </nav>
+            <div class="search-box">
+                <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+                <input type="text" id="search-input" placeholder="搜索曲目名...">
+                <button type="button" id="search-clear" class="search-clear" aria-label="清空搜索" title="清空搜索">×</button>
+                <button id="search-btn">搜索</button>
+            </div>
             <nav style="gap:2px;">
                 <span class="auth-entry" style="color:#7cf59c;font-weight:600;" id="auth-auto">🔓 自动授权已开启</span>
             </nav>
         </div>
     </header>
-    <div class="search-box">
-        <span class="search-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
-        <input type="text" id="search-input" placeholder="搜索曲目名（支持名称 / DJ / 版本关键词）...">
-        <button type="button" id="search-clear" class="search-clear" aria-label="清空搜索" title="清空搜索">×</button>
-        <button id="search-btn">搜索</button>
-    </div>
     <main id="main">
         <div class="loading"><div class="spinner"></div>正在加载曲目数据...</div>
     </main>
