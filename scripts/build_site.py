@@ -1749,10 +1749,11 @@ def generate_js(total_tracks, page_size, latest_ids):
     // 昵称显示模块已移除（仅保留自动授权标识）
   }}
 
-  // ── 搜索 ──
+  // ── 搜索（输入实时搜索 + 300ms 防抖，避免高频路由/渲染）──
   function setupSearch() {{
     const input = $('#search-input');
     const btn = $('#search-btn');
+    let t = null;
     function doSearch() {{
       const val = input.value.trim();
       if (val) {{
@@ -1760,8 +1761,19 @@ def generate_js(total_tracks, page_size, latest_ids):
         route();
       }}
     }}
+    function onInput() {{
+      clearTimeout(t);
+      t = setTimeout(function() {{
+        const val = input.value.trim();
+        const cur = new URLSearchParams(window.location.search).get('q') || '';
+        if (val && val !== cur) doSearch();
+      }}, 300);
+    }}
     btn.onclick = doSearch;
-    input.addEventListener('keydown', e => {{ if (e.key === 'Enter') doSearch(); }});
+    input.addEventListener('input', onInput);
+    input.addEventListener('keydown', e => {{
+      if (e.key === 'Enter') {{ clearTimeout(t); doSearch(); }}
+    }});
   }}
 
   // ── 页内波纹播放器（科技风可视化；音频流对接音频接口，需登录）──
