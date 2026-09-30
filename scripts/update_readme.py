@@ -50,6 +50,7 @@ readme = f"""# 9GDJ DJ Index
 ## 功能特性
 
 - **首页**：统计卡片 + 分类入口 + 最新入库曲目
+- **秒开首屏**：列表页优先加载**最近 30 天**轻量索引（数百 KB），首屏即时渲染；翻页越界或点击「加载全部历史」再按需拉取全量数据
 - **分类浏览**：单曲 / 串烧 × 中文 / 英文组合筛选
 - **全部曲目**：分页浏览，格式 / 语言下拉筛选
 - **搜索**：基于文件名的即时模糊搜索（大小写不敏感）
@@ -121,7 +122,7 @@ _数据生成时间：{s.get('generated_at', '')[:16]}_
 ├── site/                  # 构建产物 → 部署到 GitHub Pages
 │   ├── index.html
 │   ├── assets/
-│   ├── data/              # tracks.json / stats.json / dates.json
+│   ├── data/              # tracks.json / tracks-recent.json / 分片 / stats.json / dates.json
 │   └── sw.js / manifest.webmanifest
 └── README.md
 ```
@@ -163,7 +164,7 @@ python -m http.server 8000
 ## 部署
 
 1. **GitHub Pages**：仓库 Settings → Pages → Source 选择 *Deploy from a branch* → `main`（`site/` 为部署内容目录）。
-2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定）。前端内置**双 API 自动选择**：优先 `api.9gdj.com` 自定义域（国内网络可达），`*.workers.dev` 兜底（海外访问）；启动时并发健康探测自动选取可用端点。本地构建自动使用空值走 localhost（本地模式不请求代理）。
+2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定，源码独立维护不公开）。前端内置**多端点自动选择**：启动时并发健康探测自动选取可用端点，绑定自有自定义域可获得更优网络线路。本地构建自动使用空值走 localhost（本地模式不请求代理）。
 
 ## 技术栈
 
