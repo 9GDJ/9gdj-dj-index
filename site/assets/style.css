@@ -580,6 +580,22 @@ body { padding-bottom: 76px; }
   color: var(--text-dim);
   font-size: 0.85rem;
 }
+.recent-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.recent-hint a { color: var(--accent); font-weight: 600; cursor: pointer; }
 
 /* ── Footer ── */
 footer {

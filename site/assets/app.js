@@ -91,7 +91,6 @@
     return '';
   }
   function ensureTracks(fmt, lang) {
-    if (LOCAL_MODE) return Promise.resolve(null);
     const file = splitFileName(fmt, lang);
     if (file) {
       if (SPLIT_CACHE[file]) return Promise.resolve(SPLIT_CACHE[file]);
@@ -110,12 +109,30 @@
     }
     return TRACKS_PROMISE;
   }
+  // 最近 30 天轻量数据（列表首屏秒开；翻页越界/搜索/日期再拉全量）
+  let RECENT = null;
+  let RECENT_PROMISE = null;
+  let FORCE_FULL = false;
+  function ensureRecent() {
+    if (RECENT) return Promise.resolve(RECENT);
+    if (!RECENT_PROMISE) {
+      RECENT_PROMISE = fetchData('data/tracks-recent.json')
+        .then(t => { RECENT = t; return t; })
+        .catch(e => { RECENT_PROMISE = null; throw e; });
+    }
+    return RECENT_PROMISE;
+  }
+
   function findTrackById(id) {
     if (LOCAL_MODE) {
       return fetch(API + '/api/track?id=' + id).then(r => r.json()).then(d => d.ok ? d.track : null).catch(function() { return null; });
     }
     if (ALL_TRACKS) {
       const t = ALL_TRACKS.find(x => String(x.i) === String(id));
+      if (t) return Promise.resolve(t);
+    }
+    if (RECENT) {
+      const t = RECENT.find(x => String(x.i) === String(id));
       if (t) return Promise.resolve(t);
     }
     for (const k in SPLIT_CACHE) {
@@ -290,9 +307,25 @@
   async function renderList() {
     const q = getQuery();
     const m = $('#main');
+    const page = parseInt(q.page) || 1;
     const splitFile = splitFileName(q.format, q.lang);
-    if (!ALL_TRACKS && !SPLIT_CACHE[splitFile]) showLoading('正在加载曲目数据...');
-    try { await ensureTracks(q.format, q.lang); } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
+    // 首屏优先最近 30 天轻量数据（秒开）；搜索/日期/强制全部/翻页越界才拉全量
+    let usingRecent = false;
+    if (q.q || q.date || FORCE_FULL) {
+      await ensureTracks(q.format, q.lang);
+    } else {
+      try {
+        await ensureRecent();
+        const recentPages = Math.max(1, Math.ceil(RECENT.length / PAGE_SIZE));
+        if (page <= recentPages) {
+          usingRecent = true;
+        } else {
+          await ensureTracks(q.format, q.lang);
+        }
+      } catch (e) {
+        await ensureTracks(q.format, q.lang);
+      }
+    }
     m.innerHTML = '';
 
     // 面包屑
@@ -307,56 +340,8 @@
     bc.appendChild(el('span', {text: title}));
     m.appendChild(bc);
 
-    // 本地模式：列表/搜索/日期走 server 分页 API（避免加载 17MB 全量）
-    if (LOCAL_MODE) {
-      const params = new URLSearchParams();
-      if (q.format) params.set('format', q.format);
-      if (q.lang) params.set('lang', q.lang);
-      if (q.date) params.set('date', q.date);
-      if (q.q) params.set('q', q.q);
-      const page = parseInt(q.page) || 1;
-      params.set('page', page);
-      params.set('per', PAGE_SIZE);
-      try {
-        const d = await fetch(API + '/api/tracks?' + params.toString()).then(r => r.json());
-        if (!d.ok) throw new Error(d.msg || 'load failed');
-        filtered = d.tracks;
-        const bar = el('div', {class: 'filter-bar'});
-        const fmtSel = el('select');
-        [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(function(vl) {
-          const o = el('option', {value: vl[0], text: vl[1]});
-          if (q.format === vl[0]) o.selected = true;
-          fmtSel.appendChild(o);
-        });
-        fmtSel.onchange = function() { const nq = getQuery(); nq.format = fmtSel.value; if (!nq.format) delete nq.format; nq.page = 1; setQuery(nq); renderList(); };
-        bar.appendChild(fmtSel);
-        const langSel = el('select');
-        [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(function(vl) {
-          const o = el('option', {value: vl[0], text: vl[1]});
-          if (q.lang === vl[0]) o.selected = true;
-          langSel.appendChild(o);
-        });
-        langSel.onchange = function() { const nq = getQuery(); nq.lang = langSel.value; if (!nq.lang) delete nq.lang; nq.page = 1; setQuery(nq); renderList(); };
-        bar.appendChild(langSel);
-        bar.appendChild(el('span', {class: 'result-count', text: '共 ' + d.total.toLocaleString() + ' 条'}));
-        m.appendChild(bar);
-        renderTrackTable(d.tracks, m);
-        renderPagination(d.total, page, m, function(p) {
-          const nq = getQuery(); nq.page = p; setQuery(nq); renderList();
-          window.scrollTo({top: 0, behavior: 'smooth'});
-        });
-        updateNav(q.format || q.q || q.date ? 'list' : 'all');
-        const savedScroll = sessionStorage.getItem('dj_list_scroll');
-        if (savedScroll) {
-          sessionStorage.removeItem('dj_list_scroll');
-          setTimeout(function() { window.scrollTo(0, parseInt(savedScroll) || 0); }, 60);
-        }
-        return;
-      } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
-    }
-
-    // 过滤（format/lang 视图用分片数据，其余用全量）
-    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];
+    // 过滤（recent 首屏数据 / format/lang 分片 / 全量）
+    let result = usingRecent ? RECENT : (ALL_TRACKS || SPLIT_CACHE[splitFile] || []);
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
     if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
@@ -387,11 +372,19 @@
     langSel.onchange = () => { const nq = getQuery(); nq.lang = langSel.value; if(!nq.lang) delete nq.lang; nq.page=1; setQuery(nq); renderList(); };
     bar.appendChild(langSel);
 
-    bar.appendChild(el('span', {class: 'result-count', text: '共 ' + result.length.toLocaleString() + ' 条'}));
+    bar.appendChild(el('span', {class: 'result-count', text: (usingRecent ? '最近 30 天 · 共 ' : '共 ') + result.length.toLocaleString() + ' 条'}));
     m.appendChild(bar);
 
+    // 最近模式提示条（可一键加载全部历史）
+    if (usingRecent) {
+      const hint = el('div', {class: 'recent-hint'});
+      hint.innerHTML = '当前显示最近 30 天入库曲目 · <a href="javascript:;" id="load-full">加载全部历史</a>';
+      const lf = hint.querySelector('#load-full');
+      lf.onclick = function () { FORCE_FULL = true; renderList(); };
+      m.appendChild(hint);
+    }
+
     // 分页
-    const page = parseInt(q.page) || 1;
     const start = (page - 1) * PAGE_SIZE;
     const pageTracks = result.slice(start, start + PAGE_SIZE);
     renderTrackTable(pageTracks, m);
