@@ -1457,6 +1457,10 @@ def generate_js(total_tracks, page_size, latest_ids):
     let failed = false;
     let useDirect = false;
     let trackId = null;
+    let apiIdx = 0;
+    function currentApi() {{
+      return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
+    }}
 
     function fmt(s) {{
       if (!isFinite(s) || s < 0) s = 0;
@@ -1502,20 +1506,26 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (animId) {{ cancelAnimationFrame(animId); animId = null; }}
     }}
 
+    function playUrl() {{
+      const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
+      audio.src = url;
+      audio.load();
+      const p = audio.play();
+      if (p && p.catch) p.catch(function() {{}});
+    }}
+
     function play(id, name, au) {{
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
+      apiIdx = 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
-      audio.src = useDirect ? au : API + '/api/audio/' + id + '?cid=' + getCid();
-      audio.load();
       if (!animId) draw();
-      const p = audio.play();
-      if (p && p.catch) p.catch(function() {{}});
+      playUrl();
     }}
 
     function stop() {{
@@ -1563,10 +1573,24 @@ def generate_js(total_tracks, page_size, latest_ids):
         statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
       }});
     }};
-    audio.onplaying = function() {{ failed = false; btnPlay.textContent = '⏸'; statusEl.textContent = ''; }};
+    audio.onplaying = function() {{
+      failed = false;
+      btnPlay.textContent = '⏸';
+      statusEl.textContent = '';
+      if (apiIdx > 0) toast('已切换至备用线路');
+    }};
     audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
     audio.onended = function() {{ btnPlay.textContent = '▶'; }};
-    audio.onerror = function() {{ markFailed(); }};
+    audio.onerror = function() {{
+      if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {{
+        apiIdx++;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
+        playUrl();
+        return;
+      }}
+      markFailed();
+    }};
     audio.addEventListener('timeupdate', function() {{
       const d = isFinite(audio.duration) ? audio.duration : 0;
       timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(d);
@@ -1819,6 +1843,10 @@ def generate_js(total_tracks, page_size, latest_ids):
     let animId = null;
     let failed = false;
     let useDirect = false;
+    let apiIdx = 0;
+    function currentApi() {{
+      return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
+    }}
 
     function fmt(s) {{
       if (!isFinite(s) || s < 0) s = 0;
@@ -1864,21 +1892,27 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (animId) {{ cancelAnimationFrame(animId); animId = null; }}
     }}
 
+    function playUrl() {{
+      const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
+      audio.src = url;
+      audio.load();
+      const p = audio.play();
+      if (p && p.catch) p.catch(function() {{}});
+    }}
+
     function show(id, name, au) {{
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
+      apiIdx = 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
-      audio.src = useDirect ? au : API + '/api/audio/' + id + '?cid=' + getCid();
-      audio.load();
       bar.style.display = 'flex';
       if (!animId) draw();
-      const p = audio.play();
-      if (p && p.catch) p.catch(function() {{}});
+      playUrl();
     }}
 
     function hide() {{
@@ -1919,10 +1953,24 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (audio.paused) {{ const p = audio.play(); if (p && p.catch) p.catch(function() {{}}); }}
       else audio.pause();
     }};
-    audio.onplaying = function() {{ failed = false; btnPlay.textContent = '⏸'; statusEl.textContent = ''; }};
+    audio.onplaying = function() {{
+      failed = false;
+      btnPlay.textContent = '⏸';
+      statusEl.textContent = '';
+      if (apiIdx > 0) toast('已切换至备用线路');
+    }};
     audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
     audio.onended = function() {{ btnPlay.textContent = '▶'; }};
-    audio.onerror = function() {{ markFailed(); }};
+    audio.onerror = function() {{
+      if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {{
+        apiIdx++;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
+        playUrl();
+        return;
+      }}
+      markFailed();
+    }};
     audio.addEventListener('timeupdate', function() {{
       const d = isFinite(audio.duration) ? audio.duration : 0;
       timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(d);
