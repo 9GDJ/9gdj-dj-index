@@ -55,10 +55,28 @@
     }
   }
 
-  // 懒加载全量曲目数据（首次需要时拉取，之后缓存于内存）
+  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en|other]/mashup.json），否则拉全量（搜索/全部）
   let TRACKS_PROMISE = null;
-  function ensureTracks() {
+  const SPLIT_CACHE = {};
+  function splitFileName(fmt, lang) {
+    if (fmt === 'single' && lang) return 'data/tracks-single-' + lang + '.json';
+    if (fmt === 'single') return 'data/tracks-single.json';
+    if (fmt === 'mashup') return 'data/tracks-mashup.json';
+    return '';
+  }
+  function ensureTracks(fmt, lang) {
     if (LOCAL_MODE) return Promise.resolve(null);
+    const file = splitFileName(fmt, lang);
+    if (file) {
+      if (SPLIT_CACHE[file]) return Promise.resolve(SPLIT_CACHE[file]);
+      if (!SPLIT_CACHE['p-' + file]) {
+        SPLIT_CACHE['p-' + file] = fetch(file)
+          .then(r => r.json())
+          .then(t => { SPLIT_CACHE[file] = t; return t; })
+          .catch(e => { SPLIT_CACHE['p-' + file] = null; throw e; });
+      }
+      return SPLIT_CACHE['p-' + file];
+    }
     if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);
     if (!TRACKS_PROMISE) {
       TRACKS_PROMISE = fetch('data/tracks.json')
@@ -74,6 +92,10 @@
     }
     if (ALL_TRACKS) {
       const t = ALL_TRACKS.find(x => String(x.i) === String(id));
+      if (t) return Promise.resolve(t);
+    }
+    for (const k in SPLIT_CACHE) {
+      const t = SPLIT_CACHE[k] && SPLIT_CACHE[k].find ? SPLIT_CACHE[k].find(x => String(x.i) === String(id)) : null;
       if (t) return Promise.resolve(t);
     }
     const lt = window.__LATEST__ || [];
@@ -244,8 +266,9 @@
   async function renderList() {
     const q = getQuery();
     const m = $('#main');
-    if (!ALL_TRACKS) showLoading('正在加载曲目数据...');
-    try { await ensureTracks(); } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
+    const splitFile = splitFileName(q.format, q.lang);
+    if (!ALL_TRACKS && !SPLIT_CACHE[splitFile]) showLoading('正在加载曲目数据...');
+    try { await ensureTracks(q.format, q.lang); } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
     m.innerHTML = '';
 
     // 面包屑
@@ -308,8 +331,8 @@
       } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
     }
 
-    // 过滤
-    let result = ALL_TRACKS;
+    // 过滤（format/lang 视图用分片数据，其余用全量）
+    let result = ALL_TRACKS || SPLIT_CACHE[splitFile] || [];
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
     if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
