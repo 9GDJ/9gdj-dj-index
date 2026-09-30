@@ -82,9 +82,9 @@ jobs:
               title: `⚠️ 每日抓取/部署失败 ${d}`,
               body: `每日抓取/部署流程执行失败，请及时检查。
 
-- 触发方式：\`${context.eventName}\`
-- 失败时间：\`${d}\`
-- 排查入口：[Actions 运行日志](https://github.com/${context.repo.owner}/${context.repo.repo}/actions)
+                - 触发方式：\`${context.eventName}\`
+                - 失败时间：\`${d}\`
+                - 排查入口：[Actions 运行日志](https://github.com/${context.repo.owner}/${context.repo.repo}/actions)
 
-若为源站临时不可用，可稍后手动触发 \`daily-scrape-update\` 工作流重试。`
+                若为源站临时不可用，可稍后手动触发 \`daily-scrape-update\` 工作流重试。`
             });
