@@ -1091,13 +1091,33 @@ def generate_js(total_tracks, page_size, latest_ids):
     window.history.pushState({{}}, '', url);
   }}
 
+  // 数据文件双通道：优先 API 代理（CF 边缘缓存加速），失败回退相对路径（GitHub Pages 同源）
+  function fetchData(path) {{
+    const urls = [];
+    if (!LOCAL_MODE && window.API_BASE) urls.push(window.API_BASE + '/' + path);
+    urls.push(path);
+    let lastErr = null;
+    return new Promise(function (resolve, reject) {{
+      let i = 0;
+      function next() {{
+        if (i >= urls.length) return reject(lastErr || new Error('数据加载失败'));
+        fetch(urls[i++]).then(function (r) {{
+          if (r.ok) return resolve(r.json());
+          lastErr = new Error('HTTP ' + r.status);
+          next();
+        }}).catch(function (e) {{ lastErr = e; next(); }});
+      }}
+      next();
+    }});
+  }}
+
   // ── 数据加载 ──
   async function loadData() {{
     // 首屏只加载统计与日期（小文件）；tracks.json 全量数据懒加载（搜索/分类/详情首次需要时）
     try {{
       const [s, d] = await Promise.all([
-        fetch('data/stats.json').then(r => r.json()),
-        fetch('data/dates.json').then(r => r.json())
+        fetchData('data/stats.json'),
+        fetchData('data/dates.json')
       ]);
       STATS = s;
       DATES = d;
@@ -1123,8 +1143,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     if (file) {{
       if (SPLIT_CACHE[file]) return Promise.resolve(SPLIT_CACHE[file]);
       if (!SPLIT_CACHE['p-' + file]) {{
-        SPLIT_CACHE['p-' + file] = fetch(file)
-          .then(r => r.json())
+        SPLIT_CACHE['p-' + file] = fetchData(file)
           .then(t => {{ SPLIT_CACHE[file] = t; return t; }})
           .catch(e => {{ SPLIT_CACHE['p-' + file] = null; throw e; }});
       }}
@@ -1132,8 +1151,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
     if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);
     if (!TRACKS_PROMISE) {{
-      TRACKS_PROMISE = fetch('data/tracks.json')
-        .then(r => r.json())
+      TRACKS_PROMISE = fetchData('data/tracks.json')
         .then(t => {{ ALL_TRACKS = t; return t; }})
         .catch(e => {{ TRACKS_PROMISE = null; throw e; }});
     }}
