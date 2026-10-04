@@ -546,6 +546,8 @@
     let t;
     try { t = await findTrackById(id); } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
     if (!t) {
+      const ld = m.querySelector('.loading');
+      if (ld) m.removeChild(ld);
       m.appendChild(el('div', {class: 'loading', text: '未找到该曲目 (ID=' + id + ') —— 该曲目可能刚刚入库、数据同步中，请稍后刷新重试。若持续如此，可能是数据文件较大仍在加载。'}));
       return;
     }
@@ -672,10 +674,19 @@
       if (animId) { cancelAnimationFrame(animId); animId = null; }
     }
 
+    let loadTimer = null;
     function playUrl() {
       const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
       audio.src = url;
       audio.load();
+      if (loadTimer) clearTimeout(loadTimer);
+      loadTimer = setTimeout(function() {
+        if (audio.readyState < 2 && !failed) {
+          statusEl.textContent = '';
+          statusEl.appendChild(document.createTextNode('音频源连接超时，请稍后重试。'));
+          if (window.toast) toast('连接超时，请重试');
+        }
+      }, 20000);
       const p = audio.play();
       if (p && p.catch) p.catch(function() {});
     }
@@ -697,6 +708,7 @@
     function stop() {
       audio.pause();
       audio.removeAttribute('src');
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
       audio.load();
       stopAnim();
       btnPlay.textContent = '▶';
@@ -768,6 +780,7 @@
       }
       markFailed();
     };
+    audio.addEventListener('canplay', function() { if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; } });
     audio.addEventListener('timeupdate', function() {
       const d = isFinite(audio.duration) ? audio.duration : 0;
       timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(d);
@@ -1108,10 +1121,19 @@
       if (animId) { cancelAnimationFrame(animId); animId = null; }
     }
 
+    let loadTimer = null;
     function playUrl() {
       const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
       audio.src = url;
       audio.load();
+      if (loadTimer) clearTimeout(loadTimer);
+      loadTimer = setTimeout(function() {
+        if (audio.readyState < 2 && !failed) {
+          statusEl.textContent = '';
+          statusEl.appendChild(document.createTextNode('音频源连接超时，请稍后重试。'));
+          if (window.toast) toast('连接超时，请重试');
+        }
+      }, 20000);
       const p = audio.play();
       if (p && p.catch) p.catch(function() {});
     }
@@ -1135,6 +1157,7 @@
     function hide() {
       audio.pause();
       audio.removeAttribute('src');
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
       audio.load();
       stopAnim();
       bar.style.display = 'none';
@@ -1201,6 +1224,7 @@
       }
       markFailed();
     };
+    audio.addEventListener('canplay', function() { if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; } });
     audio.addEventListener('timeupdate', function() {
       const d = isFinite(audio.duration) ? audio.duration : 0;
       timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(d);
