@@ -597,6 +597,70 @@ body { padding-bottom: 76px; }
 }
 .recent-hint a { color: var(--accent); font-weight: 600; cursor: pointer; }
 
+/* ── 数据统计页 ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 14px 0 22px;
+}
+.stat-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.9));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #4fd1c5;
+  font-variant-numeric: tabular-nums;
+}
+.stat-lbl { margin-top: 4px; font-size: 0.78rem; color: var(--text-dim); }
+.stats-bar-wrap { margin: 14px 0 22px; }
+.stats-bar-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
+}
+.stats-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+}
+.stats-bar-label {
+  flex: 0 0 190px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stats-bar-track {
+  flex: 1;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.stats-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 2px;
+  transition: width 0.6s ease;
+}
+@media (max-width: 620px) {
+  .stats-bar-label { flex-basis: 128px; font-size: 0.74rem; }
+  .stat-num { font-size: 1.2rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
 /* ── Footer ── */
 footer {
   text-align: center;
