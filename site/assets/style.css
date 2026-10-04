@@ -458,7 +458,6 @@ main {
 
 /* ── 页内波纹播放器（仿 dj024：左控制+时间 / 中波形进度 / 右音量+循环+关闭；适配浏览器不遮挡）── */
 body { padding-bottom: 76px; }
-.bottom-nav { display: none; }
 .player-bar {
   position: fixed;
   left: 0;
@@ -1111,41 +1110,7 @@ footer {
   .player-name { max-width: 38vw; }
   .player-btn { width: 34px; height: 34px; font-size: 0.85rem; }
 
-  /* 移动端底部 Tab 导航 */
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 60;
-    background: rgba(10, 13, 18, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(79, 209, 197, 0.16);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-  }
-  .bottom-nav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 4px 0;
-    color: var(--text-faint);
-    font-size: 0.62rem;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: color 0.15s;
-    min-height: 44px;
-    justify-content: center;
-  }
-  .bottom-nav a svg { display: block; }
-  .bottom-nav a.on { color: var(--accent); font-weight: 600; }
-  .bottom-nav a.on svg { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.55)); }
-  .player-bar { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
-  body { padding-bottom: calc(134px + env(safe-area-inset-bottom, 0px)); }
-  header nav { display: none; }
+  header nav { display: flex; }
   .header-inner { justify-content: space-between; }
   footer { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }

@@ -409,6 +409,23 @@
     }
     filtered = result;
 
+    // 修复：recent 首屏数据无匹配（如近 30 天无英文串烧入库）时自动加载全量重筛
+    if (usingRecent && result.length === 0 && (q.format || q.lang)) {
+      try {
+        const full = await ensureTracks(q.format, q.lang);
+        result = full || [];
+        if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
+        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+        if (q.date) result = result.filter(t => t.d === q.date);
+        if (q.q) {
+          const kw = q.q.toLowerCase();
+          result = result.filter(t => t.n.toLowerCase().includes(kw));
+        }
+        usingRecent = false;
+        filtered = result;
+      } catch (e) { /* 保持空结果 */ }
+    }
+
     // 过滤栏
     const bar = el('div', {class: 'filter-bar'});
     const fmtSel = el('select');
@@ -759,8 +776,6 @@
     const map = {home: 'nav-home', all: 'nav-all', dates: 'nav-dates'};
     const id = map[active];
     if (id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
-    // 移动端底部 Tab 同步高亮
-    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.bnav === active));
   }
 
   // ── 路由 ──
