@@ -1225,6 +1225,45 @@ def generate_js(total_tracks, page_size, latest_ids):
     }});
   }}
 
+  // IndexedDB 本地缓存：全量索引一次性下载，之后搜索/详情/分类秒开
+  const IDB = (function () {{
+    const DB_NAME = '9gdj-idx', STORE = 'kv';
+    let dbPromise = null;
+    function open() {{
+      if (dbPromise) return dbPromise;
+      dbPromise = new Promise(function (resolve) {{
+        try {{
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = function () {{ try {{ req.result.createObjectStore(STORE); }} catch (e) {{}} }};
+          req.onsuccess = function () {{ resolve(req.result); }};
+          req.onerror = function () {{ resolve(null); }};
+          req.onblocked = function () {{ resolve(null); }};
+        }} catch (e) {{ resolve(null); }}
+      }});
+      return dbPromise;
+    }}
+    return {{
+      get: function (key) {{
+        return open().then(function (db) {{
+          if (!db) return null;
+          return new Promise(function (resolve) {{
+            try {{
+              const r = db.transaction(STORE, 'readonly').objectStore(STORE).get(key);
+              r.onsuccess = function () {{ resolve(r.result || null); }};
+              r.onerror = function () {{ resolve(null); }};
+            }} catch (e) {{ resolve(null); }}
+          }});
+        }});
+      }},
+      set: function (key, val) {{
+        return open().then(function (db) {{
+          if (!db) return;
+          try {{ db.transaction(STORE, 'readwrite').objectStore(STORE).put(val, key); }} catch (e) {{}}
+        }});
+      }}
+    }};
+  }})();
+
   // ── 数据加载 ──
   async function loadData() {{
     // 首屏只加载统计与日期（小文件）；tracks.json 全量数据懒加载（搜索/分类/详情首次需要时）
@@ -1264,9 +1303,18 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
     if (ALL_TRACKS) return Promise.resolve(ALL_TRACKS);
     if (!TRACKS_PROMISE) {{
-      TRACKS_PROMISE = fetchData('data/tracks.json')
-        .then(t => {{ ALL_TRACKS = t; return t; }})
-        .catch(e => {{ TRACKS_PROMISE = null; throw e; }});
+      // 优先读 IndexedDB 本地缓存（秒开），无缓存再下载并写入缓存
+      TRACKS_PROMISE = IDB.get('tracks').then(function (cached) {{
+        if (cached && cached.length) {{ ALL_TRACKS = cached; return cached; }}
+        return fetchData('data/tracks.json');
+      }}).then(function (t) {{
+        ALL_TRACKS = t;
+        try {{ IDB.set('tracks', t); }} catch (e) {{}}
+        return t;
+      }}).catch(function (e) {{
+        TRACKS_PROMISE = null;
+        throw e;
+      }});
     }}
     return TRACKS_PROMISE;
   }}
@@ -1300,13 +1348,20 @@ def generate_js(total_tracks, page_size, latest_ids):
     const lt = window.__LATEST__ || [];
     const t2 = lt.find(x => String(x.i) === String(id));
     if (t2) return Promise.resolve(t2);
-    // 详情直达兜底：先加载最近 30 天秒查；查不到再拉全量（带提示，避免白屏等待）
+    // 详情直达兜底：先加载最近 30 天秒查；查不到读本地缓存；仍无则拉全量（带提示，避免白屏等待）
     return ensureRecent().then(function (arr) {{
       const t3 = arr.find(x => String(x.i) === String(id));
       if (t3) return t3;
-      showLoading('该曲目不在最近 30 天，正在加载全部历史…');
-      return ensureTracks().then(function (arr2) {{
-        return arr2.find(x => String(x.i) === String(id)) || null;
+      return IDB.get('tracks').then(function (cached) {{
+        if (cached && cached.length) {{
+          ALL_TRACKS = cached;
+          const t4 = cached.find(x => String(x.i) === String(id));
+          if (t4) return t4;
+        }}
+        showLoading('正在加载全量曲目索引（首次约 10MB，加载后本地缓存，之后秒开）…');
+        return ensureTracks().then(function (arr2) {{
+          return arr2.find(x => String(x.i) === String(id)) || null;
+        }});
       }});
     }}).catch(function () {{
       return ensureTracks().then(function (arr2) {{
@@ -2492,7 +2547,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261009">
+    <link rel="stylesheet" href="assets/style.css?v=20261010">
 </head>
 <body>
     <script>
@@ -2696,7 +2751,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261009\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261010\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
