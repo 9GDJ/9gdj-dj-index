@@ -2504,7 +2504,6 @@ def generate_html(stats, latest_tracks):
                 <a href="?" id="nav-home">首页</a>
                 <a href="?view=all" id="nav-all">全部曲目</a>
                 <a href="?view=dates" id="nav-dates">日期归档</a>
-                <a href="?view=stats" id="nav-stats">数据统计</a>
                 <a href="?format=single">单曲</a>
                 <a href="?format=mashup">串烧</a>
             </nav>
