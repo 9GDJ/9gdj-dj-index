@@ -298,13 +298,30 @@ main {
 }
 .hero-slogan { margin-top: 10px; font-size: 0.95rem; color: var(--text-dim); }
 .hero-nums {
-  display: flex;
-  gap: 34px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
   margin-top: 22px;
-  flex-wrap: wrap;
+  max-width: 860px;
+}
+.hero-num {
+  background: linear-gradient(180deg, rgba(24, 28, 35, 0.88), rgba(18, 21, 27, 0.92));
+  border: 1px solid rgba(79, 209, 197, 0.16);
+  border-radius: var(--radius);
+  padding: 14px 10px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.hero-num:hover {
+  transform: translateY(-3px);
+  border-color: rgba(79, 209, 197, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(79, 209, 197, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .hero-num-val {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   background: linear-gradient(100deg, #4fd1c5, #8b5cf6);
@@ -312,7 +329,14 @@ main {
   background-clip: text;
   color: transparent;
 }
-.hero-num-lbl { font-size: 0.78rem; color: var(--text-faint); margin-top: 2px; }
+.hero-num-lbl { font-size: 0.76rem; color: var(--text-dim); margin-top: 3px; }
+@media (max-width: 1100px) {
+  .hero-nums { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 620px) {
+  .hero-nums { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .hero-num-val { font-size: 1.2rem; }
+}
 
 /* ── Stats Cards（固定列数保证对称：6 / 3 / 3 / 2，均能整除 6）── */
 .stats-grid {
@@ -561,17 +585,6 @@ body { padding-bottom: 76px; }
 }
 .player-status { font-size: 0.75rem; color: var(--warn); margin-top: 2px; }
 .player-status a { color: var(--accent); text-decoration: underline; }
-.player-queue {
-  font-size: 0.72rem;
-  color: var(--accent);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.28);
-  border-radius: 999px;
-  padding: 2px 10px;
-  margin-top: 5px;
-  align-self: flex-start;
-  white-space: nowrap;
-}
 .player-wave {
   width: 100%;
   height: 46px;
@@ -996,27 +1009,6 @@ footer {
   transform: translateY(-2px);
   box-shadow: 0 5px 18px rgba(6, 182, 212, 0.5);
   filter: brightness(1.08);
-}
-.detail-share {
-  display: inline-block;
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  color: #c4b5fd;
-  padding: 7px 18px;
-  border-radius: 9px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  box-shadow: 0 3px 12px rgba(139, 92, 246, 0.2);
-  transition: all 0.2s ease;
-  vertical-align: middle;
-}
-.detail-share:hover {
-  transform: translateY(-2px);
-  background: rgba(139, 92, 246, 0.2);
-  box-shadow: 0 5px 18px rgba(139, 92, 246, 0.4);
-  color: #ddd6fe;
 }
 
 /* ── 详情页内嵌波纹播放器 ── */
@@ -1526,8 +1518,11 @@ def generate_js(total_tracks, page_size, latest_ids):
     const heroNums = el('div', {{class: 'hero-nums'}});
     const nums = [
       [STATS.total, '曲目总数'],
+      [STATS.format.single || 0, '单曲'],
+      [STATS.format.mashup || 0, '串烧'],
+      [STATS.language.zh || 0, '中文'],
+      [STATS.language.en || 0, '英文'],
       [STATS.today_count || 0, '今日新增'],
-      [STATS.date_count || 0, '持续入库天数'],
     ];
     nums.forEach(function (it) {{
       const cell = el('div', {{class: 'hero-num'}});
@@ -1547,24 +1542,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     }});
     hero.appendChild(heroNums);
     m.appendChild(hero);
-
-    // 统计卡片
-    const statsGrid = el('div', {{class: 'stats-grid'}});
-    const cards = [
-      [STATS.total, '曲目总数'],
-      [STATS.format.single || 0, '单曲'],
-      [STATS.format.mashup || 0, '串烧'],
-      [STATS.language.zh || 0, '中文'],
-      [STATS.language.en || 0, '英文'],
-      [STATS.today_count || 0, '今日新增'],
-    ];
-    cards.forEach(([num, label]) => {{
-      const card = el('div', {{class: 'stat-card'}});
-      card.appendChild(el('div', {{class: 'num', text: num.toLocaleString()}}));
-      card.appendChild(el('div', {{class: 'label', text: label}}));
-      statsGrid.appendChild(card);
-    }});
-    m.appendChild(statsGrid);
 
     // 分类入口
     m.appendChild(el('div', {{class: 'section-title', text: '分类浏览'}}));
@@ -1781,24 +1758,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     const links = el('div', {{class: 'detail-links'}});
     if (t.u) links.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}}));
     links.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}}));
-    const shareBtn = el('button', {{type: 'button', class: 'detail-share', text: '复制分享链接'}});
-    shareBtn.onclick = function() {{
-      const url = location.origin + location.pathname + '?id=' + t.i;
-      const done = function() {{ toast('链接已复制，可分享给朋友。'); }};
-      if (navigator.clipboard && navigator.clipboard.writeText) {{
-        navigator.clipboard.writeText(url).then(done).catch(function() {{
-          const ta = document.createElement('textarea');
-          ta.value = url;
-          document.body.appendChild(ta);
-          ta.select();
-          try {{ document.execCommand('copy'); done(); }} catch (e) {{ toast('复制失败，请手动复制地址栏链接。'); }}
-          document.body.removeChild(ta);
-        }});
-      }} else {{
-        toast('地址栏链接即为分享链接。');
-      }}
-    }};
-    links.appendChild(shareBtn);
     wrap.appendChild(links);
 
     // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
@@ -2237,9 +2196,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     const info = el('div', {{class: 'player-info'}});
     info.appendChild(nameEl);
     info.appendChild(statusEl);
-    const qEl = el('div', {{id: 'player-queue', class: 'player-queue', text: ''}});
     mid.appendChild(info);
-    mid.appendChild(qEl);
     const canvas = el('canvas', {{class: 'player-wave'}});
     canvas.width = 460;
     canvas.height = 48;
@@ -2267,8 +2224,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     let failed = false;
     let useDirect = false;
     let apiIdx = 0;
-    let queue = null;
-    let queueIdx = 0;
     function currentApi() {{
       return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
     }}
@@ -2325,24 +2280,18 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (p && p.catch) p.catch(function() {{}});
     }}
 
-    function show(id, name, au, queueArr, qi) {{
+    function show(id, name, au) {{
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
       apiIdx = 0;
       retried = false;
-      queue = (queueArr && queueArr.length > 1) ? queueArr : null;
-      queueIdx = (queue && typeof qi === 'number') ? qi : 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
       bar.style.display = 'flex';
-      if (queue) {{
-        const qEl = document.getElementById('player-queue');
-        if (qEl) qEl.textContent = '队列 ' + (queueIdx + 1) + '/' + queue.length;
-      }}
       if (!animId) draw();
       playUrl();
     }}
@@ -2353,10 +2302,6 @@ def generate_js(total_tracks, page_size, latest_ids):
       audio.load();
       stopAnim();
       bar.style.display = 'none';
-      queue = null;
-      queueIdx = 0;
-      const qEl = document.getElementById('player-queue');
-      if (qEl) qEl.textContent = '';
     }}
 
     function markFailed() {{
@@ -2397,12 +2342,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     }};
     audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
     audio.onended = function() {{
-      if (queue && queueIdx + 1 < queue.length) {{
-        const nxt = queue[queueIdx + 1];
-        show(String(nxt.i), nxt.n, nxt.au || '', queue, queueIdx + 1);
-        toast('自动播放下一首：' + String(nxt.n).slice(0, 26));
-        return;
-      }}
       btnPlay.textContent = '▶';
     }};
     let retried = false;
@@ -2542,13 +2481,12 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
   }});
 
-  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；带队列连播）
+  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；单曲播放）
   document.addEventListener('click', function(e) {{
     const btn = e.target.closest ? e.target.closest('.act-listen') : null;
     if (btn) {{
       e.preventDefault();
-      const idx = filtered ? filtered.findIndex(x => String(x.i) === String(btn.dataset.id)) : -1;
-      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au, filtered, idx >= 0 ? idx : 0);
+      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au);
     }}
   }});
 
@@ -2639,7 +2577,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261004">
+    <link rel="stylesheet" href="assets/style.css?v=20261005">
 </head>
 <body>
     <script>
@@ -2850,7 +2788,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261004\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261005\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
