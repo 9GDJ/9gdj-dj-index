@@ -59,7 +59,7 @@ def build_minimal_tracks(tracks):
             "s": t.get("size_mib"),
             "t": t.get("time", ""),
             "f": 0 if t.get("format") == "single" else 1,
-            "l": {"zh": 0, "en": 1, "other": 2}.get(t.get("language"), 2),
+            "l": 0 if t.get("language") == "zh" else 1,
             "d": t.get("date") or "",
             "u": t.get("source_url") or "",
         })
@@ -393,46 +393,6 @@ main {
   border-radius: 2px;
 }
 
-/* ── Category Grid（6 卡对称：3 / 2 列）── */
-.cat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
-}
-@media (max-width: 1100px) {
-  .cat-grid { grid-template-columns: repeat(2, 1fr); }
-}
-.cat-card {
-  background: linear-gradient(180deg, rgba(24, 28, 35, 0.88), rgba(18, 21, 27, 0.92));
-  border: 1px solid rgba(139, 92, 246, 0.14);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  cursor: pointer;
-  transition: all 0.18s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.cat-card:hover {
-  border-color: rgba(139, 92, 246, 0.5);
-  background: linear-gradient(180deg, rgba(30, 34, 42, 0.92), rgba(22, 25, 32, 0.94));
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(139, 92, 246, 0.1);
-  text-decoration: none;
-}
-.cat-card .cat-name { font-weight: 600; font-size: 0.95rem; }
-.cat-card .cat-count {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  background: var(--accent-soft);
-  padding: 2px 10px;
-  border-radius: 12px;
-}
-
 /* ── Track Table ── */
 .track-table-wrap {
   background: var(--bg-card);
@@ -666,7 +626,6 @@ body { padding-bottom: 76px; }
 .tag-mashup { background: rgba(245,158,11,0.15); color: #fbbf24; }
 .tag-zh { background: rgba(16,185,129,0.15); color: #34d399; }
 .tag-en { background: rgba(168,85,247,0.15); color: #c084fc; }
-.tag-other { background: rgba(107,114,128,0.15); color: #9ca3af; }
 .tag-band { background: rgba(139,92,246,0.18); color: #c4b5fd; }
 
 /* ── Pagination ── */
@@ -1084,7 +1043,6 @@ footer {
   .header-inner nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; max-width: 100%; }
   .header-inner nav::-webkit-scrollbar { display: none; }
   .header-inner nav a { white-space: nowrap; flex-shrink: 0; }
-  .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .detail-title { font-size: 1.08rem; }
   .detail-meta { grid-template-columns: repeat(2, 1fr); }
   .detail-player-box { padding: 12px; }
@@ -1112,9 +1070,6 @@ footer {
   .stat-card { padding: 10px 6px; }
   .stat-card .num { font-size: 1.15rem; }
   .stat-card .label { font-size: 0.68rem; }
-  .cat-card { padding: 10px 12px; }
-  .cat-card .cat-name { font-size: 0.85rem; }
-  .cat-card .cat-count { font-size: 0.75rem; }
   .detail-wrap { padding: 14px 12px; }
   .detail-title { font-size: 0.98rem; margin-bottom: 12px; }
   .detail-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1161,10 +1116,6 @@ footer {
   .stat-card { padding: 10px 4px; border-radius: 10px; }
   .stat-card .num { font-size: 1.1rem; }
   .stat-card .label { font-size: 0.64rem; margin-top: 2px; }
-
-  /* 分类卡 2 列 */
-  .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .cat-card { padding: 12px 12px; border-radius: 10px; }
 
   /* 详情页 */
   .detail-wrap { padding: 14px 12px; }
@@ -1218,7 +1169,7 @@ def generate_js(total_tracks, page_size, latest_ids):
   let filtered = null;
 
   const FORMAT_NAMES = ['单曲', '串烧'];
-  const LANG_NAMES = ['中文', '英文', '其他'];
+  const LANG_NAMES = ['中文', '英文'];
 
   // ── 工具 ──
   function $(sel) {{ return document.querySelector(sel); }}
@@ -1411,7 +1362,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       tr.appendChild(el('td', {{class: 'col-time', text: t.t}}));
       const tagTd = el('td', {{class: 'col-tags'}});
       tagTd.appendChild(el('span', {{class: 'tag tag-' + (t.f === 1 ? 'mashup' : 'single'), text: FORMAT_NAMES[t.f]}}));
-      tagTd.appendChild(el('span', {{class: 'tag tag-' + (t.l === 0 ? 'zh' : t.l === 1 ? 'en' : 'other'), text: LANG_NAMES[t.l]}}));
+      tagTd.appendChild(el('span', {{class: 'tag tag-' + (t.l === 0 ? 'zh' : 'en'), text: LANG_NAMES[t.l]}}));
       tr.appendChild(tagTd);
       const actTd = el('td', {{class: 'col-actions'}});
       const dlUrl = buildDlUrl(t);
@@ -1482,15 +1433,15 @@ def generate_js(total_tracks, page_size, latest_ids):
     hero.appendChild(el('div', {{class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}}));
     const heroNums = el('div', {{class: 'hero-nums'}});
     const nums = [
-      [STATS.total, '曲目总数'],
-      [STATS.format.single || 0, '单曲'],
-      [STATS.format.mashup || 0, '串烧'],
-      [STATS.language.zh || 0, '中文'],
-      [STATS.language.en || 0, '英文'],
-      [STATS.today_count || 0, '今日新增'],
+      [STATS.total, '曲目总数', '?view=all'],
+      [STATS.format.single || 0, '单曲', '?format=single'],
+      [STATS.format.mashup || 0, '串烧', '?format=mashup'],
+      [STATS.language.zh || 0, '中文', '?lang=zh'],
+      [STATS.language.en || 0, '英文', '?lang=en'],
+      [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {{
-      const cell = el('div', {{class: 'hero-num'}});
+      const cell = el('a', {{href: it[2], class: 'hero-num', title: '点击查看'}});
       const nEl = el('div', {{class: 'hero-num-val', text: '0'}});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {{class: 'hero-num-lbl', text: it[1]}}));
@@ -1507,25 +1458,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     }});
     hero.appendChild(heroNums);
     m.appendChild(hero);
-
-    // 分类入口
-    m.appendChild(el('div', {{class: 'section-title', text: '分类浏览'}}));
-    const catGrid = el('div', {{class: 'cat-grid'}});
-    const cats = [
-      ['全部单曲', 'format=single', STATS.format.single || 0],
-      ['全部串烧', 'format=mashup', STATS.format.mashup || 0],
-      ['中文单曲', 'format=single&lang=zh', STATS.combo.zh_single || 0],
-      ['英文单曲', 'format=single&lang=en', STATS.combo.en_single || 0],
-      ['中文串烧', 'format=mashup&lang=zh', STATS.combo.zh_mashup || 0],
-      ['英文串烧', 'format=mashup&lang=en', STATS.combo.en_mashup || 0],
-    ];
-    cats.forEach(([name, qs, count]) => {{
-      const card = el('a', {{href: '?' + qs, class: 'cat-card'}});
-      card.appendChild(el('span', {{class: 'cat-name', text: name}}));
-      card.appendChild(el('span', {{class: 'cat-count', text: count.toLocaleString()}}));
-      catGrid.appendChild(card);
-    }});
-    m.appendChild(catGrid);
 
     // 最新入库（tracks 未加载时用页面内嵌 __LATEST__，首屏秒开）
     m.appendChild(el('div', {{class: 'section-title', text: '最新入库'}}));
@@ -1595,7 +1527,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     bc.appendChild(el('span', {{class: 'sep', text: '/'}}));
     let title = '全部曲目';
     if (q.format) title = (q.format === 'mashup' ? '串烧' : '单曲');
-    if (q.lang) title = (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '其他') + title;
+    if (q.lang) title = (q.lang === 'zh' ? '中文' : '英文') + title;
     if (q.q) title = '搜索: "' + q.q + '"';
     if (q.date) title = q.date + ' 入库';
     bc.appendChild(el('span', {{text: title}}));
@@ -1605,7 +1537,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     let result = usingRecent ? RECENT : (ALL_TRACKS || SPLIT_CACHE[splitFile] || []);
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
-    if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+    if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : t.l === 1));
     if (q.date) result = result.filter(t => t.d === q.date);
     if (q.q) {{
       const kw = q.q.toLowerCase();
@@ -1619,7 +1551,7 @@ def generate_js(total_tracks, page_size, latest_ids):
         const full = await ensureTracks(q.format, q.lang);
         result = full || [];
         if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
-        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : t.l === 1));
         if (q.date) result = result.filter(t => t.d === q.date);
         if (q.q) {{
           const kw = q.q.toLowerCase();
@@ -1642,7 +1574,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     bar.appendChild(fmtSel);
 
     const langSel = el('select');
-    [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(([v, label]) => {{
+    [['', '全部语言'], ['zh', '中文'], ['en', '英文']].forEach(([v, label]) => {{
       const o = el('option', {{value: v, text: label}});
       if (q.lang === v) o.selected = true;
       langSel.appendChild(o);
@@ -1728,7 +1660,7 @@ def generate_js(total_tracks, page_size, latest_ids):
 
     const meta = el('div', {{class: 'detail-meta'}});
     const fmtName = FORMAT_NAMES[t.f === 1 ? 1 : 0];
-    const langName = LANG_NAMES[t.l === 0 ? 0 : t.l === 1 ? 1 : 2];
+    const langName = LANG_NAMES[t.l === 0 ? 0 : 1];
     [['编号', String(t.i)], ['大小', t.s != null ? t.s + ' MiB' : '-'], ['入库时间', t.t || '-'], ['格式', fmtName], ['语言', langName]].forEach(([k, v]) => {{
       const cell = el('div', {{class: 'm'}});
       cell.appendChild(el('div', {{class: 'k', text: k}}));
@@ -2508,8 +2440,8 @@ def generate_html(stats, latest_tracks):
     for t in latest_tracks:
         fmt_cls = "tag-mashup" if t.get("format") == "mashup" else "tag-single"
         fmt_name = "串烧" if t.get("format") == "mashup" else "单曲"
-        lang_map = {"zh": ("tag-zh", "中文"), "en": ("tag-en", "英文"), "other": ("tag-other", "其他")}
-        lang_cls, lang_name = lang_map.get(t.get("language"), ("tag-other", "其他"))
+        lang_map = {"zh": ("tag-zh", "中文"), "en": ("tag-en", "英文")}
+        lang_cls, lang_name = lang_map.get(t.get("language"), ("tag-en", "英文"))
         size_str = f'{t["size_mib"]} MiB' if t.get("size_mib") is not None else "-"
         name_attr = html.escape(t['filename'], quote=True)
         au_attr = html.escape(t.get("audio_url") or "", quote=True)
@@ -2557,7 +2489,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261006">
+    <link rel="stylesheet" href="assets/style.css?v=20261007">
 </head>
 <body>
     <script>
@@ -2672,7 +2604,7 @@ def apply_js_patches(js):
             "        fmtSel.onchange = function() { const nq = getQuery(); nq.format = fmtSel.value; if (!nq.format) delete nq.format; nq.page = 1; setQuery(nq); renderList(); };\n"
             "        bar.appendChild(fmtSel);\n"
             "        const langSel = el('select');\n"
-            "        [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(function(vl) {\n"
+            "        [['', '全部语言'], ['zh', '中文'], ['en', '英文']].forEach(function(vl) {\n"
             "          const o = el('option', {value: vl[0], text: vl[1]});\n"
             "          if (q.lang === vl[0]) o.selected = true;\n"
             "          langSel.appendChild(o);\n"
@@ -2761,7 +2693,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261006\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261007\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
@@ -2835,7 +2767,6 @@ def main():
         ("single", strip_u(single), None),
         ("single-zh", strip_u([t for t in single if t["l"] == 0]), None),
         ("single-en", strip_u([t for t in single if t["l"] == 1]), None),
-        ("single-other", strip_u([t for t in single if t["l"] == 2]), None),
         ("mashup", strip_u(mashup), None),
     ]
     for fmt_name, arr, _ in split_specs:
