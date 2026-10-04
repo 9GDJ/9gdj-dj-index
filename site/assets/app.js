@@ -54,11 +54,14 @@
       let i = 0;
       function next() {
         if (i >= urls.length) return reject(lastErr || new Error('数据加载失败'));
-        fetch(urls[i++]).then(function (r) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(function () { ctrl.abort(); lastErr = new Error('加载超时'); next(); }, 12000);
+        fetch(urls[i++], { signal: ctrl.signal }).then(function (r) {
+          clearTimeout(timer);
           if (r.ok) return resolve(r.json());
           lastErr = new Error('HTTP ' + r.status);
           next();
-        }).catch(function (e) { lastErr = e; next(); });
+        }).catch(function (e) { clearTimeout(timer); if (e && e.name === 'AbortError') return; lastErr = e; next(); });
       }
       next();
     });
@@ -488,7 +491,7 @@
     let t;
     try { t = await findTrackById(id); } catch (e) { showLoading('数据加载失败: ' + e.message); return; }
     if (!t) {
-      m.appendChild(el('div', {class: 'loading', text: '未找到该曲目 (ID=' + id + ')'}));
+      m.appendChild(el('div', {class: 'loading', text: '未找到该曲目 (ID=' + id + ') —— 该曲目可能刚刚入库、数据同步中，请稍后刷新重试。若持续如此，可能是数据文件较大仍在加载。'}));
       return;
     }
     const bc = el('div', {class: 'breadcrumb'});
