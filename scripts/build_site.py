@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 静态站点生成器：读取分类后的数据，生成纯静态 GitHub Pages 站点。
