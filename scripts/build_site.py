@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 静态站点生成器：读取分类后的数据，生成纯静态 GitHub Pages 站点。
@@ -1746,6 +1746,9 @@ def generate_js(total_tracks, page_size, latest_ids):
       m.appendChild(nf);
       return;
     }}
+    // 找到曲目后移除 loading（直接访问详情页时可能残留，防止"正在加载"一直显示）
+    const ldx = m.querySelector('.loading');
+    if (ldx) m.removeChild(ldx);
     const bc = el('div', {{class: 'breadcrumb'}});
     bc.appendChild(el('a', {{href: '?', text: '首页'}}));
     bc.appendChild(el('span', {{class: 'sep', text: '/'}}));
@@ -2611,7 +2614,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261012">
+    <link rel="stylesheet" href="assets/style.css?v=20261013">
 </head>
 <body>
     <script>
@@ -2815,7 +2818,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261012\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261013\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
