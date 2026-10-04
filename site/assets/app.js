@@ -279,8 +279,11 @@
     const heroNums = el('div', {class: 'hero-nums'});
     const nums = [
       [STATS.total, '曲目总数'],
+      [STATS.format.single || 0, '单曲'],
+      [STATS.format.mashup || 0, '串烧'],
+      [STATS.language.zh || 0, '中文'],
+      [STATS.language.en || 0, '英文'],
       [STATS.today_count || 0, '今日新增'],
-      [STATS.date_count || 0, '持续入库天数'],
     ];
     nums.forEach(function (it) {
       const cell = el('div', {class: 'hero-num'});
@@ -300,24 +303,6 @@
     });
     hero.appendChild(heroNums);
     m.appendChild(hero);
-
-    // 统计卡片
-    const statsGrid = el('div', {class: 'stats-grid'});
-    const cards = [
-      [STATS.total, '曲目总数'],
-      [STATS.format.single || 0, '单曲'],
-      [STATS.format.mashup || 0, '串烧'],
-      [STATS.language.zh || 0, '中文'],
-      [STATS.language.en || 0, '英文'],
-      [STATS.today_count || 0, '今日新增'],
-    ];
-    cards.forEach(([num, label]) => {
-      const card = el('div', {class: 'stat-card'});
-      card.appendChild(el('div', {class: 'num', text: num.toLocaleString()}));
-      card.appendChild(el('div', {class: 'label', text: label}));
-      statsGrid.appendChild(card);
-    });
-    m.appendChild(statsGrid);
 
     // 分类入口
     m.appendChild(el('div', {class: 'section-title', text: '分类浏览'}));
@@ -534,24 +519,6 @@
     const links = el('div', {class: 'detail-links'});
     if (t.u) links.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}));
     links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
-    const shareBtn = el('button', {type: 'button', class: 'detail-share', text: '复制分享链接'});
-    shareBtn.onclick = function() {
-      const url = location.origin + location.pathname + '?id=' + t.i;
-      const done = function() { toast('链接已复制，可分享给朋友。'); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(done).catch(function() {
-          const ta = document.createElement('textarea');
-          ta.value = url;
-          document.body.appendChild(ta);
-          ta.select();
-          try { document.execCommand('copy'); done(); } catch (e) { toast('复制失败，请手动复制地址栏链接。'); }
-          document.body.removeChild(ta);
-        });
-      } else {
-        toast('地址栏链接即为分享链接。');
-      }
-    };
-    links.appendChild(shareBtn);
     wrap.appendChild(links);
 
     // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
@@ -1011,9 +978,7 @@
     const info = el('div', {class: 'player-info'});
     info.appendChild(nameEl);
     info.appendChild(statusEl);
-    const qEl = el('div', {id: 'player-queue', class: 'player-queue', text: ''});
     mid.appendChild(info);
-    mid.appendChild(qEl);
     const canvas = el('canvas', {class: 'player-wave'});
     canvas.width = 460;
     canvas.height = 48;
@@ -1041,8 +1006,6 @@
     let failed = false;
     let useDirect = false;
     let apiIdx = 0;
-    let queue = null;
-    let queueIdx = 0;
     function currentApi() {
       return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
     }
@@ -1099,24 +1062,18 @@
       if (p && p.catch) p.catch(function() {});
     }
 
-    function show(id, name, au, queueArr, qi) {
+    function show(id, name, au) {
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
       apiIdx = 0;
       retried = false;
-      queue = (queueArr && queueArr.length > 1) ? queueArr : null;
-      queueIdx = (queue && typeof qi === 'number') ? qi : 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
       bar.style.display = 'flex';
-      if (queue) {
-        const qEl = document.getElementById('player-queue');
-        if (qEl) qEl.textContent = '队列 ' + (queueIdx + 1) + '/' + queue.length;
-      }
       if (!animId) draw();
       playUrl();
     }
@@ -1127,10 +1084,6 @@
       audio.load();
       stopAnim();
       bar.style.display = 'none';
-      queue = null;
-      queueIdx = 0;
-      const qEl = document.getElementById('player-queue');
-      if (qEl) qEl.textContent = '';
     }
 
     function markFailed() {
@@ -1171,12 +1124,6 @@
     };
     audio.onpause = function() { btnPlay.textContent = '▶'; };
     audio.onended = function() {
-      if (queue && queueIdx + 1 < queue.length) {
-        const nxt = queue[queueIdx + 1];
-        show(String(nxt.i), nxt.n, nxt.au || '', queue, queueIdx + 1);
-        toast('自动播放下一首：' + String(nxt.n).slice(0, 26));
-        return;
-      }
       btnPlay.textContent = '▶';
     };
     let retried = false;
@@ -1325,13 +1272,12 @@
     }
   });
 
-  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；带队列连播）
+  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；单曲播放）
   document.addEventListener('click', function(e) {
     const btn = e.target.closest ? e.target.closest('.act-listen') : null;
     if (btn) {
       e.preventDefault();
-      const idx = filtered ? filtered.findIndex(x => String(x.i) === String(btn.dataset.id)) : -1;
-      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au, filtered, idx >= 0 ? idx : 0);
+      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au);
     }
   });
 
