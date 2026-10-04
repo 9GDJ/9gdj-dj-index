@@ -6,12 +6,20 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.join(os.path.dirname(SCRIPT_DIR), 'data')
 P = os.path.join(BASE, 'classified.json')
 
+VALID_EXTS = {'mp3', 'wav', 'flac', 'aac', 'm4a'}
+
 with io.open(P, 'r', encoding='utf-8') as f:
     tracks = json.load(f)
 
 bad_ids = set()
 for t in tracks:
-    if (t.get('filename') or '').strip() == '-' or not (t.get('size_mib') or 0):
+    fn = (t.get('filename') or '').strip()
+    ext = fn.rsplit('.', 1)[-1].lower() if '.' in fn else ''
+    su = t.get('source_url') or ''
+    # 规则：文件名占位/缺失、大小缺失或为 0、扩展名异常、短文件名、URL 异常
+    if (fn == '-' or not fn or not (t.get('size_mib') or 0)
+            or ext not in VALID_EXTS or len(fn) < 5
+            or not (su.startswith('http') and '.' in su)):
         bad_ids.add(t.get('id'))
 print('to remove:', len(bad_ids))
 
