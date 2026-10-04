@@ -676,6 +676,70 @@ body { padding-bottom: 76px; }
 }
 .recent-hint a { color: var(--accent); font-weight: 600; cursor: pointer; }
 
+/* ── 数据统计页 ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 14px 0 22px;
+}
+.stat-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.9));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #4fd1c5;
+  font-variant-numeric: tabular-nums;
+}
+.stat-lbl { margin-top: 4px; font-size: 0.78rem; color: var(--text-dim); }
+.stats-bar-wrap { margin: 14px 0 22px; }
+.stats-bar-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
+}
+.stats-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+}
+.stats-bar-label {
+  flex: 0 0 190px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stats-bar-track {
+  flex: 1;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.stats-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 2px;
+  transition: width 0.6s ease;
+}
+@media (max-width: 620px) {
+  .stats-bar-label { flex-basis: 128px; font-size: 0.74rem; }
+  .stat-num { font-size: 1.2rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
 /* ── Footer ── */
 footer {
   text-align: center;
@@ -1202,7 +1266,19 @@ def generate_js(total_tracks, page_size, latest_ids):
     const lt = window.__LATEST__ || [];
     const t2 = lt.find(x => String(x.i) === String(id));
     if (t2) return Promise.resolve(t2);
-    return ensureTracks().then(arr => arr.find(x => String(x.i) === String(id)) || null);
+    // 详情直达兜底：先加载最近 30 天秒查；查不到再拉全量（带提示，避免白屏等待）
+    return ensureRecent().then(function (arr) {{
+      const t3 = arr.find(x => String(x.i) === String(id));
+      if (t3) return t3;
+      showLoading('该曲目不在最近 30 天，正在加载全部历史…');
+      return ensureTracks().then(function (arr2) {{
+        return arr2.find(x => String(x.i) === String(id)) || null;
+      }});
+    }}).catch(function () {{
+      return ensureTracks().then(function (arr2) {{
+        return arr2.find(x => String(x.i) === String(id)) || null;
+      }});
+    }});
   }}
 
   function showLoading(msg) {{
@@ -1363,6 +1439,80 @@ def generate_js(total_tracks, page_size, latest_ids):
     updateNav('home');
   }}
 
+  // ── 数据统计（纯 CSS 可视化，零外部依赖）──
+  function renderStats() {{
+    const m = $('#main');
+    m.innerHTML = '';
+    const bc = el('div', {{class: 'breadcrumb'}});
+    bc.appendChild(el('a', {{href: '?', text: '首页'}}));
+    bc.appendChild(el('span', {{class: 'sep', text: '/'}}));
+    bc.appendChild(el('span', {{text: '数据统计'}}));
+    m.appendChild(bc);
+    m.appendChild(el('div', {{class: 'section-title', text: '数据统计'}}));
+    if (!STATS) {{
+      m.appendChild(el('div', {{class: 'loading', text: '统计数据加载失败'}}));
+      updateNav('all');
+      return;
+    }}
+    const s = STATS;
+    const num = function (v) {{ return (typeof v === 'number') ? v.toLocaleString() : String(v); }};
+    // 指标卡
+    const cards = el('div', {{class: 'stats-grid'}});
+    [
+      [s.total, '曲目总数'],
+      [s.format ? s.format.single || 0 : 0, '单曲'],
+      [s.format ? s.format.mashup || 0 : 0, '串烧'],
+      [s.language ? s.language.zh || 0 : 0, '中文'],
+      [s.language ? s.language.en || 0 : 0, '英文'],
+      [s.today_count || 0, '今日新增'],
+      [s.date_count || 0, '入库天数'],
+      [s.latest_date || '-', '最新入库'],
+    ].forEach(function (it) {{
+      const c = el('div', {{class: 'stat-card'}});
+      c.appendChild(el('div', {{class: 'stat-num', text: num(it[0])}}));
+      c.appendChild(el('div', {{class: 'stat-lbl', text: it[1]}}));
+      cards.appendChild(c);
+    }});
+    m.appendChild(cards);
+    // 横条图
+    const barWrap = function (title, items) {{
+      const w = el('div', {{class: 'stats-bar-wrap'}});
+      w.appendChild(el('div', {{class: 'stats-bar-title', text: title}}));
+      const max = Math.max.apply(null, items.map(function (i) {{ return i[1]; }}));
+      items.forEach(function (it) {{
+        const row = el('div', {{class: 'stats-bar-row'}});
+        row.appendChild(el('span', {{class: 'stats-bar-label', text: it[0] + '  ' + num(it[1])}}));
+        const track = el('div', {{class: 'stats-bar-track'}});
+        const pct = max ? Math.round(it[1] / max * 100) : 0;
+        const fill = el('div', {{class: 'stats-bar-fill', style: 'width:' + pct + '%;background:' + (it[2] || '#4fd1c5') + ';'}});
+        track.appendChild(fill);
+        row.appendChild(track);
+        w.appendChild(row);
+      }});
+      return w;
+    }};
+    m.appendChild(barWrap('分类构成', [
+      ['单曲', s.format ? s.format.single || 0 : 0, '#4fd1c5'],
+      ['串烧', s.format ? s.format.mashup || 0 : 0, '#f6ad55'],
+    ]));
+    m.appendChild(barWrap('语言构成', [
+      ['中文', s.language ? s.language.zh || 0 : 0, '#4fd1c5'],
+      ['英文', s.language ? s.language.en || 0 : 0, '#f6ad55'],
+      ['其他', s.language ? s.language.other || 0 : 0, '#9f7aea'],
+    ]));
+    m.appendChild(barWrap('类型组合', [
+      ['中文单曲', s.combo ? s.combo.zh_single || 0 : 0, '#4fd1c5'],
+      ['英文单曲', s.combo ? s.combo.en_single || 0 : 0, '#48bb78'],
+      ['中文串烧', s.combo ? s.combo.zh_mashup || 0 : 0, '#f6ad55'],
+      ['英文串烧', s.combo ? s.combo.en_mashup || 0 : 0, '#9f7aea'],
+    ]));
+    const top = (s.top_dates || []).slice(0, 10);
+    if (top.length) {{
+      m.appendChild(barWrap('热门入库日期 Top 10', top.map(function (td) {{ return [td[0], td[1], '#4fd1c5']; }})));
+    }}
+    updateNav('all');
+  }}
+
   // ── 列表视图（分类/搜索/全部）──
   async function renderList() {{
     const q = getQuery();
@@ -1372,7 +1522,24 @@ def generate_js(total_tracks, page_size, latest_ids):
     // 首屏优先最近 30 天轻量数据（秒开）；搜索/日期/强制全部/翻页越界才拉全量
     let usingRecent = false;
     if (q.q || q.date || FORCE_FULL) {{
-      await ensureTracks(q.format, q.lang);
+      if (q.q && !FORCE_FULL) {{
+        // 搜索优先最近 30 天秒出；近 30 天无命中再自动拉全量（避免历史数据遗漏）
+        try {{
+          await ensureRecent();
+          const kw = q.q.toLowerCase();
+          const recentHit = RECENT.filter(t => t.n.toLowerCase().includes(kw));
+          if (recentHit.length > 0) {{
+            usingRecent = true;
+          }} else {{
+            showLoading('近 30 天未找到，正在搜索全部历史…');
+            await ensureTracks(q.format, q.lang);
+          }}
+        }} catch (e) {{
+          await ensureTracks(q.format, q.lang);
+        }}
+      }} else {{
+        await ensureTracks(q.format, q.lang);
+      }}
     }} else {{
       try {{
         await ensureRecent();
@@ -1435,10 +1602,12 @@ def generate_js(total_tracks, page_size, latest_ids):
     bar.appendChild(el('span', {{class: 'result-count', text: (usingRecent ? '最近 30 天 · 共 ' : '共 ') + result.length.toLocaleString() + ' 条'}}));
     m.appendChild(bar);
 
-    // 最近模式提示条（可一键加载全部历史）
+    // 最近模式提示条（可一键加载全部历史/搜索全部历史）
     if (usingRecent) {{
       const hint = el('div', {{class: 'recent-hint'}});
-      hint.innerHTML = '当前显示最近 30 天入库曲目 · <a href="javascript:;" id="load-full">加载全部历史</a>';
+      hint.innerHTML = (q.q
+        ? '已搜索最近 30 天入库曲目 · <a href="javascript:;" id="load-full">搜索全部历史</a>'
+        : '当前显示最近 30 天入库曲目 · <a href="javascript:;" id="load-full">加载全部历史</a>');
       const lf = hint.querySelector('#load-full');
       lf.onclick = function () {{ FORCE_FULL = true; renderList(); }};
       m.appendChild(hint);
@@ -1756,7 +1925,9 @@ def generate_js(total_tracks, page_size, latest_ids):
       renderDetail(q.id);
     }} else {{
       if (typeof detailPlayer !== 'undefined' && detailPlayer) detailPlayer.stop();
-      if (q.view === 'dates' || q.date) {{
+      if (q.view === 'stats') {{
+        renderStats();
+      }} else if (q.view === 'dates' || q.date) {{
         if (q.date) renderList();
         else renderDates();
       }} else if (q.format || q.lang || q.q || q.view === 'all' || q.page) {{
@@ -2289,7 +2460,18 @@ def generate_html(stats, latest_tracks):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类</title>
-    <meta name="description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索和日期归档。仅元数据索引，不存储音频文件。">
+    <meta name="description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索、日期归档、在线试听与下载。仅元数据索引，不存储音频文件。">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://9gdj.com/9gdj-dj-index/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="9GDJ DJ 索引">
+    <meta property="og:title" content="9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类">
+    <meta property="og:description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索、日期归档、在线试听与下载。仅元数据索引，不存储音频文件。">
+    <meta property="og:url" content="https://9gdj.com/9gdj-dj-index/">
+    <meta property="og:image" content="https://9gdj.com/9gdj-dj-index/assets/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="9GDJ DJ 索引">
+    <meta name="twitter:description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索、日期归档、在线试听与下载。">
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
@@ -2322,6 +2504,7 @@ def generate_html(stats, latest_tracks):
                 <a href="?" id="nav-home">首页</a>
                 <a href="?view=all" id="nav-all">全部曲目</a>
                 <a href="?view=dates" id="nav-dates">日期归档</a>
+                <a href="?view=stats" id="nav-stats">数据统计</a>
                 <a href="?format=single">单曲</a>
                 <a href="?format=mashup">串烧</a>
             </nav>
@@ -2632,6 +2815,25 @@ def main():
         print("  PWA: manifest / sw / icons 已复制")
     else:
         print("  PWA: pwa-assets 目录不存在，跳过")
+
+    # 8. sitemap.xml（首页/分类/日期归档/最新曲目详情）
+    base = "https://9gdj.com/9gdj-dj-index/"
+    sitemap_urls = [base]
+    for q in ("?view=all", "?format=single", "?format=mashup", "?format=single&lang=zh",
+              "?format=single&lang=en", "?format=mashup&lang=zh", "?format=mashup&lang=en", "?view=dates"):
+        sitemap_urls.append(base + q)
+    for d, _ in dates:
+        sitemap_urls.append(base + "?date=" + d)
+    for t in latest[:500]:
+        sitemap_urls.append(base + "?id=" + str(t.get("i", "")))
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for u in sitemap_urls:
+        sitemap_xml += "  <url><loc>" + u + "</loc></url>\n"
+    sitemap_xml += "</urlset>\n"
+    with open(os.path.join(SITE_DIR, "sitemap.xml"), "w", encoding="utf-8") as f:
+        f.write(sitemap_xml)
+    print(f"  sitemap.xml: {len(sitemap_urls)} URLs")
 
     print(f"\n站点已生成到: {SITE_DIR}")
     print(f"  index.html")
