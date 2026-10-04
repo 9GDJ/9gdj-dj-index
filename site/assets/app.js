@@ -11,7 +11,7 @@
   let filtered = null;
 
   const FORMAT_NAMES = ['单曲', '串烧'];
-  const LANG_NAMES = ['中文', '英文', '其他'];
+  const LANG_NAMES = ['中文', '英文'];
 
   // ── 工具 ──
   function $(sel) { return document.querySelector(sel); }
@@ -207,7 +207,7 @@
       tr.appendChild(el('td', {class: 'col-time', text: t.t}));
       const tagTd = el('td', {class: 'col-tags'});
       tagTd.appendChild(el('span', {class: 'tag tag-' + (t.f === 1 ? 'mashup' : 'single'), text: FORMAT_NAMES[t.f]}));
-      tagTd.appendChild(el('span', {class: 'tag tag-' + (t.l === 0 ? 'zh' : t.l === 1 ? 'en' : 'other'), text: LANG_NAMES[t.l]}));
+      tagTd.appendChild(el('span', {class: 'tag tag-' + (t.l === 0 ? 'zh' : 'en'), text: LANG_NAMES[t.l]}));
       tr.appendChild(tagTd);
       const actTd = el('td', {class: 'col-actions'});
       const dlUrl = buildDlUrl(t);
@@ -278,15 +278,15 @@
     hero.appendChild(el('div', {class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}));
     const heroNums = el('div', {class: 'hero-nums'});
     const nums = [
-      [STATS.total, '曲目总数'],
-      [STATS.format.single || 0, '单曲'],
-      [STATS.format.mashup || 0, '串烧'],
-      [STATS.language.zh || 0, '中文'],
-      [STATS.language.en || 0, '英文'],
-      [STATS.today_count || 0, '今日新增'],
+      [STATS.total, '曲目总数', '?view=all'],
+      [STATS.format.single || 0, '单曲', '?format=single'],
+      [STATS.format.mashup || 0, '串烧', '?format=mashup'],
+      [STATS.language.zh || 0, '中文', '?lang=zh'],
+      [STATS.language.en || 0, '英文', '?lang=en'],
+      [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {
-      const cell = el('div', {class: 'hero-num'});
+      const cell = el('a', {href: it[2], class: 'hero-num', title: '点击查看'});
       const nEl = el('div', {class: 'hero-num-val', text: '0'});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {class: 'hero-num-lbl', text: it[1]}));
@@ -303,25 +303,6 @@
     });
     hero.appendChild(heroNums);
     m.appendChild(hero);
-
-    // 分类入口
-    m.appendChild(el('div', {class: 'section-title', text: '分类浏览'}));
-    const catGrid = el('div', {class: 'cat-grid'});
-    const cats = [
-      ['全部单曲', 'format=single', STATS.format.single || 0],
-      ['全部串烧', 'format=mashup', STATS.format.mashup || 0],
-      ['中文单曲', 'format=single&lang=zh', STATS.combo.zh_single || 0],
-      ['英文单曲', 'format=single&lang=en', STATS.combo.en_single || 0],
-      ['中文串烧', 'format=mashup&lang=zh', STATS.combo.zh_mashup || 0],
-      ['英文串烧', 'format=mashup&lang=en', STATS.combo.en_mashup || 0],
-    ];
-    cats.forEach(([name, qs, count]) => {
-      const card = el('a', {href: '?' + qs, class: 'cat-card'});
-      card.appendChild(el('span', {class: 'cat-name', text: name}));
-      card.appendChild(el('span', {class: 'cat-count', text: count.toLocaleString()}));
-      catGrid.appendChild(card);
-    });
-    m.appendChild(catGrid);
 
     // 最新入库（tracks 未加载时用页面内嵌 __LATEST__，首屏秒开）
     m.appendChild(el('div', {class: 'section-title', text: '最新入库'}));
@@ -391,7 +372,7 @@
     bc.appendChild(el('span', {class: 'sep', text: '/'}));
     let title = '全部曲目';
     if (q.format) title = (q.format === 'mashup' ? '串烧' : '单曲');
-    if (q.lang) title = (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '其他') + title;
+    if (q.lang) title = (q.lang === 'zh' ? '中文' : '英文') + title;
     if (q.q) title = '搜索: "' + q.q + '"';
     if (q.date) title = q.date + ' 入库';
     bc.appendChild(el('span', {text: title}));
@@ -401,7 +382,7 @@
     let result = usingRecent ? RECENT : (ALL_TRACKS || SPLIT_CACHE[splitFile] || []);
     if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
 
-    if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+    if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : t.l === 1));
     if (q.date) result = result.filter(t => t.d === q.date);
     if (q.q) {
       const kw = q.q.toLowerCase();
@@ -415,7 +396,7 @@
         const full = await ensureTracks(q.format, q.lang);
         result = full || [];
         if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
-        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : t.l === 1));
         if (q.date) result = result.filter(t => t.d === q.date);
         if (q.q) {
           const kw = q.q.toLowerCase();
@@ -438,7 +419,7 @@
     bar.appendChild(fmtSel);
 
     const langSel = el('select');
-    [['', '全部语言'], ['zh', '中文'], ['en', '英文'], ['other', '其他']].forEach(([v, label]) => {
+    [['', '全部语言'], ['zh', '中文'], ['en', '英文']].forEach(([v, label]) => {
       const o = el('option', {value: v, text: label});
       if (q.lang === v) o.selected = true;
       langSel.appendChild(o);
@@ -524,7 +505,7 @@
 
     const meta = el('div', {class: 'detail-meta'});
     const fmtName = FORMAT_NAMES[t.f === 1 ? 1 : 0];
-    const langName = LANG_NAMES[t.l === 0 ? 0 : t.l === 1 ? 1 : 2];
+    const langName = LANG_NAMES[t.l === 0 ? 0 : 1];
     [['编号', String(t.i)], ['大小', t.s != null ? t.s + ' MiB' : '-'], ['入库时间', t.t || '-'], ['格式', fmtName], ['语言', langName]].forEach(([k, v]) => {
       const cell = el('div', {class: 'm'});
       cell.appendChild(el('div', {class: 'k', text: k}));
