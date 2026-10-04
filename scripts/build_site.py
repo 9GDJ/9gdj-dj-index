@@ -676,70 +676,6 @@ body { padding-bottom: 76px; }
 }
 .recent-hint a { color: var(--accent); font-weight: 600; cursor: pointer; }
 
-/* ── 数据统计页 ── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin: 14px 0 22px;
-}
-.stat-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.9));
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px 14px;
-  text-align: center;
-}
-.stat-num {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #4fd1c5;
-  font-variant-numeric: tabular-nums;
-}
-.stat-lbl { margin-top: 4px; font-size: 0.78rem; color: var(--text-dim); }
-.stats-bar-wrap { margin: 14px 0 22px; }
-.stats-bar-title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 10px;
-  padding-left: 10px;
-  border-left: 3px solid var(--accent);
-}
-.stats-bar-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 7px 0;
-}
-.stats-bar-label {
-  flex: 0 0 190px;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.stats-bar-track {
-  flex: 1;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.stats-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  min-width: 2px;
-  transition: width 0.6s ease;
-}
-@media (max-width: 620px) {
-  .stats-bar-label { flex-basis: 128px; font-size: 0.74rem; }
-  .stat-num { font-size: 1.2rem; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-}
-
 /* ── Footer ── */
 footer {
   text-align: center;
@@ -1439,80 +1375,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     updateNav('home');
   }}
 
-  // ── 数据统计（纯 CSS 可视化，零外部依赖）──
-  function renderStats() {{
-    const m = $('#main');
-    m.innerHTML = '';
-    const bc = el('div', {{class: 'breadcrumb'}});
-    bc.appendChild(el('a', {{href: '?', text: '首页'}}));
-    bc.appendChild(el('span', {{class: 'sep', text: '/'}}));
-    bc.appendChild(el('span', {{text: '数据统计'}}));
-    m.appendChild(bc);
-    m.appendChild(el('div', {{class: 'section-title', text: '数据统计'}}));
-    if (!STATS) {{
-      m.appendChild(el('div', {{class: 'loading', text: '统计数据加载失败'}}));
-      updateNav('all');
-      return;
-    }}
-    const s = STATS;
-    const num = function (v) {{ return (typeof v === 'number') ? v.toLocaleString() : String(v); }};
-    // 指标卡
-    const cards = el('div', {{class: 'stats-grid'}});
-    [
-      [s.total, '曲目总数'],
-      [s.format ? s.format.single || 0 : 0, '单曲'],
-      [s.format ? s.format.mashup || 0 : 0, '串烧'],
-      [s.language ? s.language.zh || 0 : 0, '中文'],
-      [s.language ? s.language.en || 0 : 0, '英文'],
-      [s.today_count || 0, '今日新增'],
-      [s.date_count || 0, '入库天数'],
-      [s.latest_date || '-', '最新入库'],
-    ].forEach(function (it) {{
-      const c = el('div', {{class: 'stat-card'}});
-      c.appendChild(el('div', {{class: 'stat-num', text: num(it[0])}}));
-      c.appendChild(el('div', {{class: 'stat-lbl', text: it[1]}}));
-      cards.appendChild(c);
-    }});
-    m.appendChild(cards);
-    // 横条图
-    const barWrap = function (title, items) {{
-      const w = el('div', {{class: 'stats-bar-wrap'}});
-      w.appendChild(el('div', {{class: 'stats-bar-title', text: title}}));
-      const max = Math.max.apply(null, items.map(function (i) {{ return i[1]; }}));
-      items.forEach(function (it) {{
-        const row = el('div', {{class: 'stats-bar-row'}});
-        row.appendChild(el('span', {{class: 'stats-bar-label', text: it[0] + '  ' + num(it[1])}}));
-        const track = el('div', {{class: 'stats-bar-track'}});
-        const pct = max ? Math.round(it[1] / max * 100) : 0;
-        const fill = el('div', {{class: 'stats-bar-fill', style: 'width:' + pct + '%;background:' + (it[2] || '#4fd1c5') + ';'}});
-        track.appendChild(fill);
-        row.appendChild(track);
-        w.appendChild(row);
-      }});
-      return w;
-    }};
-    m.appendChild(barWrap('分类构成', [
-      ['单曲', s.format ? s.format.single || 0 : 0, '#4fd1c5'],
-      ['串烧', s.format ? s.format.mashup || 0 : 0, '#f6ad55'],
-    ]));
-    m.appendChild(barWrap('语言构成', [
-      ['中文', s.language ? s.language.zh || 0 : 0, '#4fd1c5'],
-      ['英文', s.language ? s.language.en || 0 : 0, '#f6ad55'],
-      ['其他', s.language ? s.language.other || 0 : 0, '#9f7aea'],
-    ]));
-    m.appendChild(barWrap('类型组合', [
-      ['中文单曲', s.combo ? s.combo.zh_single || 0 : 0, '#4fd1c5'],
-      ['英文单曲', s.combo ? s.combo.en_single || 0 : 0, '#48bb78'],
-      ['中文串烧', s.combo ? s.combo.zh_mashup || 0 : 0, '#f6ad55'],
-      ['英文串烧', s.combo ? s.combo.en_mashup || 0 : 0, '#9f7aea'],
-    ]));
-    const top = (s.top_dates || []).slice(0, 10);
-    if (top.length) {{
-      m.appendChild(barWrap('热门入库日期 Top 10', top.map(function (td) {{ return [td[0], td[1], '#4fd1c5']; }})));
-    }}
-    updateNav('all');
-  }}
-
   // ── 列表视图（分类/搜索/全部）──
   async function renderList() {{
     const q = getQuery();
@@ -1925,9 +1787,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       renderDetail(q.id);
     }} else {{
       if (typeof detailPlayer !== 'undefined' && detailPlayer) detailPlayer.stop();
-      if (q.view === 'stats') {{
-        renderStats();
-      }} else if (q.view === 'dates' || q.date) {{
+      if (q.view === 'dates' || q.date) {{
         if (q.date) renderList();
         else renderDates();
       }} else if (q.format || q.lang || q.q || q.view === 'all' || q.page) {{
