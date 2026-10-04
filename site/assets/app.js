@@ -159,7 +159,15 @@
 
   function showLoading(msg) {
     const m = $('#main');
-    m.innerHTML = '<div class="loading"><div class="spinner"></div>' + (msg || '加载中...') + '</div>';
+    if (!msg) {
+      // 无参数：表格骨架屏（列表加载）
+      m.innerHTML = '<div class="skeleton-wrap">' +
+        Array.from({length: 6}, function () {
+          return '<div class="skeleton-row"><div class="sk sk-a"></div><div class="sk sk-b"></div><div class="sk sk-c"></div><div class="sk sk-d"></div><div class="sk sk-b" style="width:70%"></div></div>';
+        }).join('') + '</div>';
+      return;
+    }
+    m.innerHTML = '<div class="loading"><div class="spinner"></div>' + msg + '</div>';
   }
   function hideLoading() { $('#main').innerHTML = ''; }
 
@@ -261,6 +269,38 @@
     const m = $('#main');
     m.innerHTML = '';
 
+    // Hero 品牌区（渐变字标 + 标语 + 数字滚动）
+    const hero = el('div', {class: 'hero'});
+    const hTitle = el('div', {class: 'hero-title'});
+    hTitle.appendChild(el('span', {class: 'hero-g', text: '9GDJ'}));
+    hTitle.appendChild(el('span', {class: 'hero-sub', text: 'DJ INDEX'}));
+    hero.appendChild(hTitle);
+    hero.appendChild(el('div', {class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}));
+    const heroNums = el('div', {class: 'hero-nums'});
+    const nums = [
+      [STATS.total, '曲目总数'],
+      [STATS.today_count || 0, '今日新增'],
+      [STATS.date_count || 0, '持续入库天数'],
+    ];
+    nums.forEach(function (it) {
+      const cell = el('div', {class: 'hero-num'});
+      const nEl = el('div', {class: 'hero-num-val', text: '0'});
+      cell.appendChild(nEl);
+      cell.appendChild(el('div', {class: 'hero-num-lbl', text: it[1]}));
+      heroNums.appendChild(cell);
+      const target = it[0] || 0;
+      const dur = 900;
+      const t0 = performance.now();
+      (function tick(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        nEl.textContent = Math.round(target * eased).toLocaleString();
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+    hero.appendChild(heroNums);
+    m.appendChild(hero);
+
     // 统计卡片
     const statsGrid = el('div', {class: 'stats-grid'});
     const cards = [
@@ -321,6 +361,9 @@
     const m = $('#main');
     const page = parseInt(q.page) || 1;
     const splitFile = splitFileName(q.format, q.lang);
+    // 切换视图时先显示骨架屏（数据就绪后被下方渲染覆盖）
+    m.innerHTML = '';
+    showLoading();
     // 首屏优先最近 30 天轻量数据（秒开）；搜索/日期/强制全部/翻页越界才拉全量
     let usingRecent = false;
     if (q.q || q.date || FORCE_FULL) {
@@ -471,6 +514,9 @@
     bc.appendChild(el('span', {text: '曲目详情'}));
     m.appendChild(bc);
 
+    // 浏览器标签页标题跟随曲目（SEO + 定位体验）
+    document.title = String(t.n).slice(0, 60) + ' - 9GDJ DJ 索引';
+
     const wrap = el('div', {class: 'detail-wrap'});
     wrap.appendChild(el('div', {class: 'detail-title', text: t.n}));
 
@@ -488,6 +534,24 @@
     const links = el('div', {class: 'detail-links'});
     if (t.u) links.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}));
     links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
+    const shareBtn = el('button', {type: 'button', class: 'detail-share', text: '复制分享链接'});
+    shareBtn.onclick = function() {
+      const url = location.origin + location.pathname + '?id=' + t.i;
+      const done = function() { toast('链接已复制，可分享给朋友。'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(function() {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) { toast('复制失败，请手动复制地址栏链接。'); }
+          document.body.removeChild(ta);
+        });
+      } else {
+        toast('地址栏链接即为分享链接。');
+      }
+    };
+    links.appendChild(shareBtn);
     wrap.appendChild(links);
 
     // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
@@ -660,12 +724,23 @@
     };
     audio.onpause = function() { btnPlay.textContent = '▶'; };
     audio.onended = function() { btnPlay.textContent = '▶'; };
+    let retried = false;
     audio.onerror = function() {
       if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {
         apiIdx++;
         statusEl.textContent = '';
         statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
         playUrl();
+        return;
+      }
+      if (!retried) {
+        retried = true;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('线路波动，正在重试…'));
+        toast('播放波动，正在重试…');
+        setTimeout(function() {
+          playUrl();
+        }, 800);
         return;
       }
       markFailed();
@@ -713,10 +788,12 @@
 
   // ── 导航高亮 ──
   function updateNav(active) {
-    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
     const map = {home: 'nav-home', all: 'nav-all', dates: 'nav-dates'};
     const id = map[active];
     if (id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
+    // 移动端底部 Tab 同步高亮
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.bnav === active));
   }
 
   // ── 路由 ──
@@ -726,6 +803,7 @@
       if (typeof player !== 'undefined' && player) player.hide();
       renderDetail(q.id);
     } else {
+      document.title = '9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类';
       if (typeof detailPlayer !== 'undefined' && detailPlayer) detailPlayer.stop();
       if (q.view === 'dates' || q.date) {
         if (q.date) renderList();
@@ -933,7 +1011,9 @@
     const info = el('div', {class: 'player-info'});
     info.appendChild(nameEl);
     info.appendChild(statusEl);
+    const qEl = el('div', {id: 'player-queue', class: 'player-queue', text: ''});
     mid.appendChild(info);
+    mid.appendChild(qEl);
     const canvas = el('canvas', {class: 'player-wave'});
     canvas.width = 460;
     canvas.height = 48;
@@ -961,6 +1041,8 @@
     let failed = false;
     let useDirect = false;
     let apiIdx = 0;
+    let queue = null;
+    let queueIdx = 0;
     function currentApi() {
       return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
     }
@@ -1017,17 +1099,24 @@
       if (p && p.catch) p.catch(function() {});
     }
 
-    function show(id, name, au) {
+    function show(id, name, au, queueArr, qi) {
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
       apiIdx = 0;
+      retried = false;
+      queue = (queueArr && queueArr.length > 1) ? queueArr : null;
+      queueIdx = (queue && typeof qi === 'number') ? qi : 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
       bar.style.display = 'flex';
+      if (queue) {
+        const qEl = document.getElementById('player-queue');
+        if (qEl) qEl.textContent = '队列 ' + (queueIdx + 1) + '/' + queue.length;
+      }
       if (!animId) draw();
       playUrl();
     }
@@ -1038,6 +1127,10 @@
       audio.load();
       stopAnim();
       bar.style.display = 'none';
+      queue = null;
+      queueIdx = 0;
+      const qEl = document.getElementById('player-queue');
+      if (qEl) qEl.textContent = '';
     }
 
     function markFailed() {
@@ -1077,13 +1170,32 @@
       if (apiIdx > 0) toast('已切换至备用线路');
     };
     audio.onpause = function() { btnPlay.textContent = '▶'; };
-    audio.onended = function() { btnPlay.textContent = '▶'; };
+    audio.onended = function() {
+      if (queue && queueIdx + 1 < queue.length) {
+        const nxt = queue[queueIdx + 1];
+        show(String(nxt.i), nxt.n, nxt.au || '', queue, queueIdx + 1);
+        toast('自动播放下一首：' + String(nxt.n).slice(0, 26));
+        return;
+      }
+      btnPlay.textContent = '▶';
+    };
+    let retried = false;
     audio.onerror = function() {
       if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {
         apiIdx++;
         statusEl.textContent = '';
         statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
         playUrl();
+        return;
+      }
+      if (!retried) {
+        retried = true;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('线路波动，正在重试…'));
+        toast('播放波动，正在重试…');
+        setTimeout(function() {
+          playUrl();
+        }, 800);
         return;
       }
       markFailed();
@@ -1213,22 +1325,27 @@
     }
   });
 
-  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行）
+  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；带队列连播）
   document.addEventListener('click', function(e) {
     const btn = e.target.closest ? e.target.closest('.act-listen') : null;
     if (btn) {
       e.preventDefault();
-      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au);
+      const idx = filtered ? filtered.findIndex(x => String(x.i) === String(btn.dataset.id)) : -1;
+      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au, filtered, idx >= 0 ? idx : 0);
     }
   });
 
-  // 下载按钮：未登录拦截
+  // 下载按钮：未登录拦截 + 下载反馈
   document.addEventListener('click', function(e) {
-    const a = e.target.closest ? e.target.closest('a.act-download') : null;
-    if (a && !isAuthed()) {
-      e.preventDefault();
-      if (auth) auth.open('login');
-      toast('登录后可下载曲目。');
+    const a = e.target.closest ? e.target.closest('a.act-download, a.track-download') : null;
+    if (a) {
+      if (!isAuthed()) {
+        e.preventDefault();
+        if (auth) auth.open('login');
+        toast('登录后可下载曲目。');
+      } else {
+        toast('正在准备下载…');
+      }
     }
   });
 
