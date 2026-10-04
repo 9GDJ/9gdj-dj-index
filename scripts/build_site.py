@@ -133,7 +133,12 @@ header {
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.logo-ico { display: block; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(79, 209, 197, 0.45)); }
+.logo-text { background: linear-gradient(100deg, #4fd1c5 10%, #8b5cf6 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .logo span { color: var(--text-dim); font-weight: 400; font-size: 0.82rem; }
 nav { display: flex; gap: 6px; flex-wrap: wrap; }
 nav a {
@@ -253,6 +258,62 @@ main {
   padding: 24px 20px 60px;
 }
 
+/* ── Hero 品牌区 ── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 34px 32px 30px;
+  margin-bottom: 28px;
+  background:
+    radial-gradient(620px 240px at 12% 0%, rgba(79, 209, 197, 0.22), transparent 70%),
+    radial-gradient(700px 260px at 88% 100%, rgba(139, 92, 246, 0.24), transparent 70%),
+    linear-gradient(180deg, rgba(20, 24, 30, 0.9), rgba(12, 15, 20, 0.94));
+  border: 1px solid rgba(79, 209, 197, 0.18);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(79, 209, 197, 0.06) 0%, transparent 40%, rgba(139, 92, 246, 0.07) 100%);
+}
+.hero-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hero-g {
+  font-size: 2.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(100deg, #4fd1c5 8%, #22d3ee 40%, #8b5cf6 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(34, 211, 238, 0.3));
+}
+.hero-sub {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+}
+.hero-slogan { margin-top: 10px; font-size: 0.95rem; color: var(--text-dim); }
+.hero-nums {
+  display: flex;
+  gap: 34px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.hero-num-val {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(100deg, #4fd1c5, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-num-lbl { font-size: 0.78rem; color: var(--text-faint); margin-top: 2px; }
+
 /* ── Stats Cards（固定列数保证对称：6 / 3 / 3 / 2，均能整除 6）── */
 .stats-grid {
   display: grid;
@@ -264,16 +325,26 @@ main {
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 .stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(24, 28, 35, 0.88), rgba(18, 21, 27, 0.92));
+  border: 1px solid rgba(79, 209, 197, 0.14);
   border-radius: var(--radius);
   padding: 18px 20px;
   text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(79, 209, 197, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(79, 209, 197, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .stat-card .num {
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 .stat-card .label {
   font-size: 0.82rem;
@@ -309,19 +380,24 @@ main {
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .cat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(24, 28, 35, 0.88), rgba(18, 21, 27, 0.92));
+  border: 1px solid rgba(139, 92, 246, 0.14);
   border-radius: var(--radius);
   padding: 16px 18px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.18s;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .cat-card:hover {
-  border-color: var(--accent);
-  background: var(--bg-hover);
+  border-color: rgba(139, 92, 246, 0.5);
+  background: linear-gradient(180deg, rgba(30, 34, 42, 0.92), rgba(22, 25, 32, 0.94));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(139, 92, 246, 0.1);
   text-decoration: none;
 }
 .cat-card .cat-name { font-weight: 600; font-size: 0.95rem; }
@@ -366,13 +442,23 @@ main {
   vertical-align: middle;
 }
 .track-table tr:last-child td { border-bottom: none; }
-.track-table tr:hover { background: var(--bg-hover); }
+.track-table tr {
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.track-table tr:hover {
+  background: linear-gradient(90deg, rgba(79, 209, 197, 0.06), rgba(139, 92, 246, 0.06));
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 .track-table .track-name {
   color: var(--text);
   font-weight: 500;
   word-break: break-all;
+  transition: color 0.15s;
 }
-.track-table .track-name:hover { color: var(--accent); }
+.track-table .track-name:hover {
+  color: var(--accent);
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
 .track-table .col-id {
   color: var(--text-faint);
   font-size: 0.8rem;
@@ -427,6 +513,7 @@ main {
 
 /* ── 页内波纹播放器（仿 dj024：左控制+时间 / 中波形进度 / 右音量+循环+关闭；适配浏览器不遮挡）── */
 body { padding-bottom: 76px; }
+.bottom-nav { display: none; }
 .player-bar {
   position: fixed;
   left: 0;
@@ -474,6 +561,17 @@ body { padding-bottom: 76px; }
 }
 .player-status { font-size: 0.75rem; color: var(--warn); margin-top: 2px; }
 .player-status a { color: var(--accent); text-decoration: underline; }
+.player-queue {
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-top: 5px;
+  align-self: flex-start;
+  white-space: nowrap;
+}
 .player-wave {
   width: 100%;
   height: 46px;
@@ -635,6 +733,36 @@ body { padding-bottom: 76px; }
 }
 .date-item .d { font-weight: 600; font-size: 0.9rem; }
 .date-item .c { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+/* ── 加载骨架屏 ── */
+.skeleton-wrap { display: flex; flex-direction: column; gap: 8px; }
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 90px 130px 120px;
+  gap: 12px;
+  padding: 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(24, 28, 35, 0.7), rgba(16, 19, 25, 0.75));
+}
+.skeleton-row .sk {
+  height: 13px;
+  border-radius: 6px;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.05) 60%);
+  background-size: 220% 100%;
+  animation: sk-shimmer 1.3s linear infinite;
+}
+.sk-a { width: 40px; }
+.sk-b { width: 100%; }
+.sk-c { width: 70px; }
+.sk-d { width: 90px; }
+@keyframes sk-shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-row .sk { animation: none; }
+}
 
 /* ── Filter Bar ── */
 .filter-bar {
@@ -869,6 +997,27 @@ footer {
   box-shadow: 0 5px 18px rgba(6, 182, 212, 0.5);
   filter: brightness(1.08);
 }
+.detail-share {
+  display: inline-block;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+  padding: 7px 18px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(139, 92, 246, 0.2);
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+.detail-share:hover {
+  transform: translateY(-2px);
+  background: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 5px 18px rgba(139, 92, 246, 0.4);
+  color: #ddd6fe;
+}
 
 /* ── 详情页内嵌波纹播放器 ── */
 .detail-player-box {
@@ -1048,6 +1197,44 @@ footer {
   body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
   .player-name { max-width: 38vw; }
   .player-btn { width: 34px; height: 34px; font-size: 0.85rem; }
+
+  /* 移动端底部 Tab 导航 */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+    background: rgba(10, 13, 18, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(79, 209, 197, 0.16);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 0;
+    color: var(--text-faint);
+    font-size: 0.62rem;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: color 0.15s;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .bottom-nav a svg { display: block; }
+  .bottom-nav a.on { color: var(--accent); font-weight: 600; }
+  .bottom-nav a.on svg { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.55)); }
+  .player-bar { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(134px + env(safe-area-inset-bottom, 0px)); }
+  header nav { display: none; }
+  .header-inner { justify-content: space-between; }
+  footer { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* 更小屏（≤380px）：进一步收紧 */
@@ -1219,7 +1406,15 @@ def generate_js(total_tracks, page_size, latest_ids):
 
   function showLoading(msg) {{
     const m = $('#main');
-    m.innerHTML = '<div class="loading"><div class="spinner"></div>' + (msg || '加载中...') + '</div>';
+    if (!msg) {{
+      // 无参数：表格骨架屏（列表加载）
+      m.innerHTML = '<div class="skeleton-wrap">' +
+        Array.from({{length: 6}}, function () {{
+          return '<div class="skeleton-row"><div class="sk sk-a"></div><div class="sk sk-b"></div><div class="sk sk-c"></div><div class="sk sk-d"></div><div class="sk sk-b" style="width:70%"></div></div>';
+        }}).join('') + '</div>';
+      return;
+    }}
+    m.innerHTML = '<div class="loading"><div class="spinner"></div>' + msg + '</div>';
   }}
   function hideLoading() {{ $('#main').innerHTML = ''; }}
 
@@ -1321,6 +1516,38 @@ def generate_js(total_tracks, page_size, latest_ids):
     const m = $('#main');
     m.innerHTML = '';
 
+    // Hero 品牌区（渐变字标 + 标语 + 数字滚动）
+    const hero = el('div', {{class: 'hero'}});
+    const hTitle = el('div', {{class: 'hero-title'}});
+    hTitle.appendChild(el('span', {{class: 'hero-g', text: '9GDJ'}}));
+    hTitle.appendChild(el('span', {{class: 'hero-sub', text: 'DJ INDEX'}}));
+    hero.appendChild(hTitle);
+    hero.appendChild(el('div', {{class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}}));
+    const heroNums = el('div', {{class: 'hero-nums'}});
+    const nums = [
+      [STATS.total, '曲目总数'],
+      [STATS.today_count || 0, '今日新增'],
+      [STATS.date_count || 0, '持续入库天数'],
+    ];
+    nums.forEach(function (it) {{
+      const cell = el('div', {{class: 'hero-num'}});
+      const nEl = el('div', {{class: 'hero-num-val', text: '0'}});
+      cell.appendChild(nEl);
+      cell.appendChild(el('div', {{class: 'hero-num-lbl', text: it[1]}}));
+      heroNums.appendChild(cell);
+      const target = it[0] || 0;
+      const dur = 900;
+      const t0 = performance.now();
+      (function tick(now) {{
+        const p = Math.min(1, (now - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        nEl.textContent = Math.round(target * eased).toLocaleString();
+        if (p < 1) requestAnimationFrame(tick);
+      }})(t0);
+    }});
+    hero.appendChild(heroNums);
+    m.appendChild(hero);
+
     // 统计卡片
     const statsGrid = el('div', {{class: 'stats-grid'}});
     const cards = [
@@ -1381,6 +1608,9 @@ def generate_js(total_tracks, page_size, latest_ids):
     const m = $('#main');
     const page = parseInt(q.page) || 1;
     const splitFile = splitFileName(q.format, q.lang);
+    // 切换视图时先显示骨架屏（数据就绪后被下方渲染覆盖）
+    m.innerHTML = '';
+    showLoading();
     // 首屏优先最近 30 天轻量数据（秒开）；搜索/日期/强制全部/翻页越界才拉全量
     let usingRecent = false;
     if (q.q || q.date || FORCE_FULL) {{
@@ -1531,6 +1761,9 @@ def generate_js(total_tracks, page_size, latest_ids):
     bc.appendChild(el('span', {{text: '曲目详情'}}));
     m.appendChild(bc);
 
+    // 浏览器标签页标题跟随曲目（SEO + 定位体验）
+    document.title = String(t.n).slice(0, 60) + ' - 9GDJ DJ 索引';
+
     const wrap = el('div', {{class: 'detail-wrap'}});
     wrap.appendChild(el('div', {{class: 'detail-title', text: t.n}}));
 
@@ -1548,6 +1781,24 @@ def generate_js(total_tracks, page_size, latest_ids):
     const links = el('div', {{class: 'detail-links'}});
     if (t.u) links.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}}));
     links.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}}));
+    const shareBtn = el('button', {{type: 'button', class: 'detail-share', text: '复制分享链接'}});
+    shareBtn.onclick = function() {{
+      const url = location.origin + location.pathname + '?id=' + t.i;
+      const done = function() {{ toast('链接已复制，可分享给朋友。'); }};
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(url).then(done).catch(function() {{
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          document.body.appendChild(ta);
+          ta.select();
+          try {{ document.execCommand('copy'); done(); }} catch (e) {{ toast('复制失败，请手动复制地址栏链接。'); }}
+          document.body.removeChild(ta);
+        }});
+      }} else {{
+        toast('地址栏链接即为分享链接。');
+      }}
+    }};
+    links.appendChild(shareBtn);
     wrap.appendChild(links);
 
     // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
@@ -1720,12 +1971,23 @@ def generate_js(total_tracks, page_size, latest_ids):
     }};
     audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
     audio.onended = function() {{ btnPlay.textContent = '▶'; }};
+    let retried = false;
     audio.onerror = function() {{
       if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {{
         apiIdx++;
         statusEl.textContent = '';
         statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
         playUrl();
+        return;
+      }}
+      if (!retried) {{
+        retried = true;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('线路波动，正在重试…'));
+        toast('播放波动，正在重试…');
+        setTimeout(function() {{
+          playUrl();
+        }}, 800);
         return;
       }}
       markFailed();
@@ -1773,10 +2035,12 @@ def generate_js(total_tracks, page_size, latest_ids):
 
   // ── 导航高亮 ──
   function updateNav(active) {{
-    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
     const map = {{home: 'nav-home', all: 'nav-all', dates: 'nav-dates'}};
     const id = map[active];
     if (id) {{ const el = document.getElementById(id); if (el) el.classList.add('active'); }}
+    // 移动端底部 Tab 同步高亮
+    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.bnav === active));
   }}
 
   // ── 路由 ──
@@ -1786,6 +2050,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (typeof player !== 'undefined' && player) player.hide();
       renderDetail(q.id);
     }} else {{
+      document.title = '9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类';
       if (typeof detailPlayer !== 'undefined' && detailPlayer) detailPlayer.stop();
       if (q.view === 'dates' || q.date) {{
         if (q.date) renderList();
@@ -1972,7 +2237,9 @@ def generate_js(total_tracks, page_size, latest_ids):
     const info = el('div', {{class: 'player-info'}});
     info.appendChild(nameEl);
     info.appendChild(statusEl);
+    const qEl = el('div', {{id: 'player-queue', class: 'player-queue', text: ''}});
     mid.appendChild(info);
+    mid.appendChild(qEl);
     const canvas = el('canvas', {{class: 'player-wave'}});
     canvas.width = 460;
     canvas.height = 48;
@@ -2000,6 +2267,8 @@ def generate_js(total_tracks, page_size, latest_ids):
     let failed = false;
     let useDirect = false;
     let apiIdx = 0;
+    let queue = null;
+    let queueIdx = 0;
     function currentApi() {{
       return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
     }}
@@ -2056,17 +2325,24 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (p && p.catch) p.catch(function() {{}});
     }}
 
-    function show(id, name, au) {{
+    function show(id, name, au, queueArr, qi) {{
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
       apiIdx = 0;
+      retried = false;
+      queue = (queueArr && queueArr.length > 1) ? queueArr : null;
+      queueIdx = (queue && typeof qi === 'number') ? qi : 0;
       nameEl.textContent = name;
       statusEl.textContent = '';
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
       bar.style.display = 'flex';
+      if (queue) {{
+        const qEl = document.getElementById('player-queue');
+        if (qEl) qEl.textContent = '队列 ' + (queueIdx + 1) + '/' + queue.length;
+      }}
       if (!animId) draw();
       playUrl();
     }}
@@ -2077,6 +2353,10 @@ def generate_js(total_tracks, page_size, latest_ids):
       audio.load();
       stopAnim();
       bar.style.display = 'none';
+      queue = null;
+      queueIdx = 0;
+      const qEl = document.getElementById('player-queue');
+      if (qEl) qEl.textContent = '';
     }}
 
     function markFailed() {{
@@ -2116,13 +2396,32 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (apiIdx > 0) toast('已切换至备用线路');
     }};
     audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
-    audio.onended = function() {{ btnPlay.textContent = '▶'; }};
+    audio.onended = function() {{
+      if (queue && queueIdx + 1 < queue.length) {{
+        const nxt = queue[queueIdx + 1];
+        show(String(nxt.i), nxt.n, nxt.au || '', queue, queueIdx + 1);
+        toast('自动播放下一首：' + String(nxt.n).slice(0, 26));
+        return;
+      }}
+      btnPlay.textContent = '▶';
+    }};
+    let retried = false;
     audio.onerror = function() {{
       if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {{
         apiIdx++;
         statusEl.textContent = '';
         statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
         playUrl();
+        return;
+      }}
+      if (!retried) {{
+        retried = true;
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode('线路波动，正在重试…'));
+        toast('播放波动，正在重试…');
+        setTimeout(function() {{
+          playUrl();
+        }}, 800);
         return;
       }}
       markFailed();
@@ -2243,22 +2542,27 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
   }});
 
-  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行）
+  // 试听按钮事件委托（覆盖 JS 渲染行与首页预渲染行；带队列连播）
   document.addEventListener('click', function(e) {{
     const btn = e.target.closest ? e.target.closest('.act-listen') : null;
     if (btn) {{
       e.preventDefault();
-      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au);
+      const idx = filtered ? filtered.findIndex(x => String(x.i) === String(btn.dataset.id)) : -1;
+      player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au, filtered, idx >= 0 ? idx : 0);
     }}
   }});
 
-  // 下载按钮：未登录拦截
+  // 下载按钮：未登录拦截 + 下载反馈
   document.addEventListener('click', function(e) {{
-    const a = e.target.closest ? e.target.closest('a.act-download') : null;
-    if (a && !isAuthed()) {{
-      e.preventDefault();
-      if (auth) auth.open('login');
-      toast('登录后可下载曲目。');
+    const a = e.target.closest ? e.target.closest('a.act-download, a.track-download') : null;
+    if (a) {{
+      if (!isAuthed()) {{
+        e.preventDefault();
+        if (auth) auth.open('login');
+        toast('登录后可下载曲目。');
+      }} else {{
+        toast('正在准备下载…');
+      }}
     }}
   }});
 
@@ -2359,7 +2663,16 @@ def generate_html(stats, latest_tracks):
     <script>window.__LATEST__ = {latest_min_json};</script>
     <header>
         <div class="header-inner">
-            <div class="logo">🎧 9GDJ Index <span>曲目元数据索引</span></div>
+            <div class="logo">
+                <svg class="logo-ico" width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <defs><linearGradient id="lg9" x1="0" y1="0" x2="24" y2="24"><stop offset="0" stop-color="#4fd1c5"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+                    <path d="M3.5 12.5a8.5 8.5 0 0 1 17 0" stroke="url(#lg9)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M3 13v1.6a2 2 0 0 0 4 0V13a2 2 0 0 0-4 0z" fill="url(#lg9)"/>
+                    <path d="M17 13v1.6a2 2 0 0 0 4 0V13a2 2 0 0 0-4 0z" fill="url(#lg9)"/>
+                    <path d="M12 3.2v5.6" stroke="url(#lg9)" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span class="logo-text">9GDJ Index</span> <span>曲目元数据索引</span>
+            </div>
             <nav>
                 <a href="?" id="nav-home">首页</a>
                 <a href="?view=all" id="nav-all">全部曲目</a>
@@ -2386,6 +2699,13 @@ def generate_html(stats, latest_tracks):
         <p>打开即可试听、下载（系统自动授权，无需注册登录）</p>
         <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 100)} MiB 即为串烧</p>
     </footer>
+    <nav class="bottom-nav" aria-label="移动端导航">
+        <a href="?" data-bnav="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg><span>首页</span></a>
+        <a href="?view=all" data-bnav="all"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>全部</span></a>
+        <a href="?format=single" data-bnav="single"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>单曲</span></a>
+        <a href="?format=mashup" data-bnav="mashup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-6 4 12 2-6h4"/></svg><span>串烧</span></a>
+        <a href="?view=dates" data-bnav="dates"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>日期</span></a>
+    </nav>
     <script>
         // PWA：仅 https 或 localhost 注册 Service Worker
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {{
