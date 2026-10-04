@@ -557,6 +557,9 @@
       m.appendChild(nf);
       return;
     }
+    // 找到曲目后移除 loading（直接访问详情页时可能残留，防止"正在加载"一直显示）
+    const ldx = m.querySelector('.loading');
+    if (ldx) m.removeChild(ldx);
     const bc = el('div', {class: 'breadcrumb'});
     bc.appendChild(el('a', {href: '?', text: '首页'}));
     bc.appendChild(el('span', {class: 'sep', text: '/'}));
