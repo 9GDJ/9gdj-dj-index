@@ -1,0 +1,63 @@
+name: uptime-check
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check API health
+        id: check
+        env:
+          API_HEALTH: https://api.9gdj.com/api/health
+          PAGES_STATS: https://9gdj.com/9gdj-dj-index/data/stats.json
+        run: |
+          api_code=$(curl -s -o /tmp/api.json -w "%{http_code}" --max-time 20 "$API_HEALTH" || echo 000)
+          api_ok=$(grep -o '"ok":true' /tmp/api.json || true)
+          pages_code=$(curl -s -o /tmp/stats.json -w "%{http_code}" --max-time 20 "$PAGES_STATS" || echo 000)
+          pages_ok=$(grep -o '"total"' /tmp/stats.json || true)
+          echo "api_code=$api_code api_ok=${api_ok:-none} pages_code=$pages_code pages_ok=${pages_ok:-none}"
+          if [ "$api_code" != "200" ] || [ -z "$api_ok" ] || [ "$pages_code" != "200" ] || [ -z "$pages_ok" ]; then
+            echo "fail=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update failure issue
+        if: steps.check.outputs.fail == '1'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: ['uptime']
+            });
+            const body = `⚠️ 站点健康检查失败\n检查时间：${new Date().toISOString()}\n详情：${runUrl}\n\n每 10 分钟自动复检，恢复后本 Issue 将自动关闭。`;
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '🚨 站点健康检查失败', body, labels: ['uptime']
+              });
+            }
+
+      - name: Close issue when healthy
+        if: steps.check.outputs.fail != '1'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: ['uptime']
+            });
+            for (const it of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: it.number, state: 'closed'
+              });
+            }
