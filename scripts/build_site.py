@@ -1212,11 +1212,14 @@ def generate_js(total_tracks, page_size, latest_ids):
       let i = 0;
       function next() {{
         if (i >= urls.length) return reject(lastErr || new Error('数据加载失败'));
-        fetch(urls[i++]).then(function (r) {{
+        const ctrl = new AbortController();
+        const timer = setTimeout(function () {{ ctrl.abort(); lastErr = new Error('加载超时'); next(); }}, 12000);
+        fetch(urls[i++], {{ signal: ctrl.signal }}).then(function (r) {{
+          clearTimeout(timer);
           if (r.ok) return resolve(r.json());
           lastErr = new Error('HTTP ' + r.status);
           next();
-        }}).catch(function (e) {{ lastErr = e; next(); }});
+        }}).catch(function (e) {{ clearTimeout(timer); if (e && e.name === 'AbortError') return; lastErr = e; next(); }});
       }}
       next();
     }});
@@ -1643,7 +1646,7 @@ def generate_js(total_tracks, page_size, latest_ids):
     let t;
     try {{ t = await findTrackById(id); }} catch (e) {{ showLoading('数据加载失败: ' + e.message); return; }}
     if (!t) {{
-      m.appendChild(el('div', {{class: 'loading', text: '未找到该曲目 (ID=' + id + ')'}}));
+      m.appendChild(el('div', {{class: 'loading', text: '未找到该曲目 (ID=' + id + ') —— 该曲目可能刚刚入库、数据同步中，请稍后刷新重试。若持续如此，可能是数据文件较大仍在加载。'}}));
       return;
     }}
     const bc = el('div', {{class: 'breadcrumb'}});
@@ -2489,7 +2492,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261008">
+    <link rel="stylesheet" href="assets/style.css?v=20261009">
 </head>
 <body>
     <script>
@@ -2693,7 +2696,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261008\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261009\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
