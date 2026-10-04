@@ -2000,7 +2000,7 @@ def generate_js(total_tracks, page_size, latest_ids):
   }}
 
   // ── 登录态（本地标记；官方页完成登录后确认）──
-  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；线上自动测速选择 api.9gdj.com / workers.dev）
+  // 部署配置：window.API_BASE 由 index.html 注入（空=同源本地；线上走主站同域 /api）
   let API = window.API_BASE || '';
   function getCid() {{
     let c = localStorage.getItem('panda_cid');
@@ -2418,7 +2418,7 @@ def generate_js(total_tracks, page_size, latest_ids):
 
   // ── 初始化 ──
   window.addEventListener('DOMContentLoaded', async () => {{
-    // 双 API 自动选择：api.9gdj.com（国内可达）优先，workers.dev 兜底
+    // API 已同域化：统一走主站 9gdj.com/api（CF Worker 路由代理）
     if (window.resolveApi) {{ await window.resolveApi(); API = window.API_BASE; }}
     setupSearch();
     refreshAuthUI();
@@ -2489,12 +2489,12 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261007">
+    <link rel="stylesheet" href="assets/style.css?v=20261008">
 </head>
 <body>
     <script>
-        // 双 API 候选：api.9gdj.com（国内可达）优先，workers.dev 兜底；本地同源模式保持空
-        window.API_CANDIDATES = ['https://api.9gdj.com', 'https://9gdj-proxy.114155125.workers.dev'];
+        // 同域 API：走主站 9gdj.com/api（CF Worker 路由代理），不暴露独立 API 域名；本地同源模式保持空
+        window.API_CANDIDATES = ['https://9gdj.com'];
         window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : window.API_CANDIDATES[0];
         window.resolveApi = async function () {{
           if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {{ window.API_BASE = ''; return ''; }}
@@ -2693,7 +2693,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261007\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261008\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
