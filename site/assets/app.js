@@ -548,7 +548,13 @@
     if (!t) {
       const ld = m.querySelector('.loading');
       if (ld) m.removeChild(ld);
-      m.appendChild(el('div', {class: 'loading', text: '未找到该曲目 (ID=' + id + ') —— 该曲目可能刚刚入库、数据同步中，请稍后刷新重试。若持续如此，可能是数据文件较大仍在加载。'}));
+      const nf = el('div', {class: 'notfound'});
+      nf.appendChild(el('p', {class: 'nf-title', text: '抱歉，没有找到编号 ' + id + ' 的曲目'}));
+      nf.appendChild(el('p', {class: 'nf-desc', text: '它可能刚刚入库、数据还在同步中，请稍后刷新重试；若反复出现，说明该曲目可能已失效或已下架。'}));
+      const cta = el('p', {class: 'nf-cta'});
+      cta.appendChild(el('a', {href: '?', text: '← 返回首页继续浏览'}));
+      nf.appendChild(cta);
+      m.appendChild(nf);
       return;
     }
     const bc = el('div', {class: 'breadcrumb'});
