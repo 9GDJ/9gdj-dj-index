@@ -537,7 +537,6 @@ main {
 
 /* ── 页内波纹播放器（仿 dj024：左控制+时间 / 中波形进度 / 右音量+循环+关闭；适配浏览器不遮挡）── */
 body { padding-bottom: 76px; }
-.bottom-nav { display: none; }
 .player-bar {
   position: fixed;
   left: 0;
@@ -1190,41 +1189,7 @@ footer {
   .player-name { max-width: 38vw; }
   .player-btn { width: 34px; height: 34px; font-size: 0.85rem; }
 
-  /* 移动端底部 Tab 导航 */
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 60;
-    background: rgba(10, 13, 18, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(79, 209, 197, 0.16);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-  }
-  .bottom-nav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 4px 0;
-    color: var(--text-faint);
-    font-size: 0.62rem;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: color 0.15s;
-    min-height: 44px;
-    justify-content: center;
-  }
-  .bottom-nav a svg { display: block; }
-  .bottom-nav a.on { color: var(--accent); font-weight: 600; }
-  .bottom-nav a.on svg { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.55)); }
-  .player-bar { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
-  body { padding-bottom: calc(134px + env(safe-area-inset-bottom, 0px)); }
-  header nav { display: none; }
+  header nav { display: flex; }
   .header-inner { justify-content: space-between; }
   footer { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
@@ -1648,6 +1613,23 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
     filtered = result;
 
+    // 修复：recent 首屏数据无匹配（如近 30 天无英文串烧入库）时自动加载全量重筛
+    if (usingRecent && result.length === 0 && (q.format || q.lang)) {{
+      try {{
+        const full = await ensureTracks(q.format, q.lang);
+        result = full || [];
+        if (q.format) result = result.filter(t => (q.format === 'mashup' ? t.f === 1 : t.f === 0));
+        if (q.lang) result = result.filter(t => (q.lang === 'zh' ? t.l === 0 : q.lang === 'en' ? t.l === 1 : t.l === 2));
+        if (q.date) result = result.filter(t => t.d === q.date);
+        if (q.q) {{
+          const kw = q.q.toLowerCase();
+          result = result.filter(t => t.n.toLowerCase().includes(kw));
+        }}
+        usingRecent = false;
+        filtered = result;
+      }} catch (e) {{ /* 保持空结果 */ }}
+    }}
+
     // 过滤栏
     const bar = el('div', {{class: 'filter-bar'}});
     const fmtSel = el('select');
@@ -1998,8 +1980,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     const map = {{home: 'nav-home', all: 'nav-all', dates: 'nav-dates'}};
     const id = map[active];
     if (id) {{ const el = document.getElementById(id); if (el) el.classList.add('active'); }}
-    // 移动端底部 Tab 同步高亮
-    document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.bnav === active));
   }}
 
   // ── 路由 ──
@@ -2577,7 +2557,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261005">
+    <link rel="stylesheet" href="assets/style.css?v=20261006">
 </head>
 <body>
     <script>
@@ -2637,13 +2617,6 @@ def generate_html(stats, latest_tracks):
         <p>打开即可试听、下载（系统自动授权，无需注册登录）</p>
         <p>生成时间：{stats.get('generated_at', '')[:19].replace('T', ' ')} | 分类阈值：≥{stats.get('size_threshold_mib', 100)} MiB 即为串烧</p>
     </footer>
-    <nav class="bottom-nav" aria-label="移动端导航">
-        <a href="?" data-bnav="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg><span>首页</span></a>
-        <a href="?view=all" data-bnav="all"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>全部</span></a>
-        <a href="?format=single" data-bnav="single"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>单曲</span></a>
-        <a href="?format=mashup" data-bnav="mashup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-6 4 12 2-6h4"/></svg><span>串烧</span></a>
-        <a href="?view=dates" data-bnav="dates"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>日期</span></a>
-    </nav>
     <script>
         // PWA：仅 https 或 localhost 注册 Service Worker
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {{
@@ -2788,7 +2761,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261005\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261006\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
