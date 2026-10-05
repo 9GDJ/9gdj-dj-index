@@ -402,6 +402,14 @@
     const m = $('#main');
     const page = parseInt(q.page) || 1;
     const splitFile = splitFileName(q.format, q.lang);
+    // 搜索栏与当前分类同步
+    try {
+      const si = document.getElementById('search-input');
+      if (si) {
+        const sc = (q.format === 'mashup' ? '串烧' : q.format === 'single' ? '单曲' : '') + (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '');
+        si.placeholder = sc ? ('搜索 ' + sc + ' 曲目名...') : '搜索曲目名...';
+      }
+    } catch (e) {}
     // 切换视图时先显示骨架屏（数据就绪后被下方渲染覆盖）
     m.innerHTML = '';
     showLoading();
@@ -484,8 +492,6 @@
 
     // 过滤栏
     const bar = el('div', {class: 'filter-bar'});
-    const fmtChip = el('span', {class: 'fmt-chip', text: q.format === 'mashup' ? '串烧' : q.format === 'single' ? '单曲' : (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '全部曲目')});
-    bar.appendChild(fmtChip);
     const fmtSel = el('select');
     [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(([v, label]) => {
       const o = el('option', {value: v, text: label});
@@ -607,12 +613,10 @@
     links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
     wrap.appendChild(links);
 
-    // 详情页播放：播放器内嵌替换"播放试听"按钮位置（单播放器架构，共享同一 audio）
-    const playBtn = el('button', {type: 'button', class: 'detail-play-btn', text: '▶  播放试听', title: '播放（内嵌播放器）'});
-    playBtn.addEventListener('click', function() {
-      if (typeof player !== 'undefined' && player) player.show(t.i, t.n, t.au || '', playBtn);
-    });
-    wrap.appendChild(playBtn);
+    // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）
+    if (typeof player !== 'undefined' && player) {
+      player.show(t.i, t.n, t.au || '', wrap, false);
+    }
     m.appendChild(wrap);
     updateNav('home');
   }
@@ -632,6 +636,7 @@
       if (typeof player !== 'undefined' && player) player.hide();
       renderDetail(q.id);
     } else {
+      if (typeof player !== 'undefined' && player) player.hide();
       document.title = '9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类';
       if (q.view === 'dates' || q.date) {
         if (q.date) renderList();
@@ -937,7 +942,7 @@
     }
 
     let inlineAnchor = null;
-    function show(id, name, au, anchor) {
+    function show(id, name, au, anchor, autoplay) {
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
@@ -945,15 +950,25 @@
       retried = false;
       nameEl.textContent = name;
       statusEl.textContent = '';
-      statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
+      if (autoplay === false) {
+        statusEl.appendChild(document.createTextNode('已就绪 · 点击 ▶ 开始试听'));
+      } else {
+        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
+      }
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
-      if (anchor && anchor.parentNode) {
-        // 详情页内嵌模式：播放器替换"播放试听"按钮位置（不弹底部栏）
+      if (anchor) {
+        // 详情页内嵌模式：播放器直接显示在详情页内（不弹底部栏）
         inlineAnchor = anchor;
-        anchor.style.display = 'none';
         bar.classList.add('player-inline');
-        anchor.parentNode.insertBefore(bar, anchor);
+        if (anchor.classList && anchor.classList.contains('detail-wrap')) {
+          // 详情页容器：播放器追加到详情信息之后
+          anchor.appendChild(bar);
+        } else {
+          // 替换锚点元素（如按钮）
+          anchor.style.display = 'none';
+          if (anchor.parentNode) anchor.parentNode.insertBefore(bar, anchor);
+        }
       } else {
         // 列表模式：底部播放栏
         inlineAnchor = null;
@@ -962,7 +977,7 @@
       }
       bar.style.display = 'flex';
       if (!animId) draw();
-      playUrl();
+      if (autoplay !== false) playUrl();
     }
 
     function hide() {
@@ -971,10 +986,10 @@
       if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
       audio.load();
       stopAnim();
-      if (inlineAnchor && inlineAnchor.parentNode) {
+      if (inlineAnchor) {
         // 从详情页容器移回 body 并恢复按钮
         try { bar.parentNode.removeChild(bar); } catch (e) {}
-        inlineAnchor.style.display = '';
+        if (inlineAnchor.style) inlineAnchor.style.display = '';
         inlineAnchor = null;
       }
       document.body.appendChild(bar);
