@@ -770,6 +770,8 @@
           statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
         });
       } else {
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
         playUrl();
       }
     };
@@ -825,6 +827,8 @@
           statusEl.appendChild(document.createTextNode('播放失败：' + (er && er.name ? er.name : '未知错误') + '，请重试。'));
         });
       } else {
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
         playUrl();
       }
     });
