@@ -1949,6 +1949,8 @@ def generate_js(total_tracks, page_size, latest_ids):
           statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
         }});
       }} else {{
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
         playUrl();
       }}
     }};
@@ -2004,6 +2006,8 @@ def generate_js(total_tracks, page_size, latest_ids):
           statusEl.appendChild(document.createTextNode('播放失败：' + (er && er.name ? er.name : '未知错误') + '，请重试。'));
         }});
       }} else {{
+        statusEl.textContent = '';
+        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
         playUrl();
       }}
     }});
@@ -2618,7 +2622,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261015">
+    <link rel="stylesheet" href="assets/style.css?v=20261016">
 </head>
 <body>
     <script>
@@ -2822,7 +2826,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261015\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261016\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
