@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Edge%20Proxy-Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)
 
 纯静态 [GitHub Pages](https://pages.github.com/) 站点：索引**互联网公开列表**中的舞曲曲目元数据，按**单曲 / 串烧**、**中文 / 英文**分类，支持搜索、日期归档、页内试听与一键下载。
 
@@ -12,16 +12,15 @@
 
 ## 功能特性
 
-- **首页**：统计卡片 + 分类入口 + 最新入库曲目
-- **秒开首屏**：列表页优先加载**最近 30 天**轻量索引（数百 KB），首屏即时渲染；翻页越界或点击「加载全部历史」再按需拉取全量数据
+- **首页 Hero 品牌区**：曲目总数 / 单曲 / 串烧 / 中文 / 英文 / 今日新增 六项统计 + 分类入口 + 最新入库曲目
+- **秒开首屏**：列表页优先加载**最近 30 天**轻量索引（数百 KB），首屏即时渲染；翻页越界或点击「加载全部历史」再按需拉取全量数据（全量索引自动写入浏览器本地缓存，二次访问秒开）
 - **分类浏览**：单曲 / 串烧 × 中文 / 英文组合筛选
 - **全部曲目**：分页浏览，格式 / 语言下拉筛选
 - **搜索**：基于文件名的即时模糊搜索（大小写不敏感）
 - **日期归档**：全部入库日期网格，点击查看当天曲目
-- **页内试听**：不跳转，科技风**波纹播放器**（Canvas 动态波形 + 点击波形跳转进度），播放源由边缘代理层实时转发
+- **页内试听**：不跳转，科技风**五彩波纹播放器**（Canvas 动态波形 + 蒙层进度 + 点击波形跳转进度），播放源经同域代理实时转发
 - **一键下载**：下载 MP3，文件名保持原始文件名；**ID3 品牌化**：艺术家 / 唱片集 / 流派标记为本站品牌（标题保留原值不替换）
-- **免登录自动授权**：访问者打开站点即自动获得试听 / 下载权限，无需注册
-- **注册 / 登录（可选）**：自行注册账号后自动并入账号池，播放 / 下载优先使用本人账号授权；登录状态显示昵称，支持退出
+- **免登录自动授权**：访问者打开站点即自动获得试听 / 下载权限，无需注册；同一访客复用授权会话
 - **移动端适配**：卡片化布局、整卡点击、首屏懒加载、滚动位置记忆
 - **PWA**：可安装；Service Worker 缓存静态资源（缓存名随构建自动版本化）
 
@@ -36,12 +35,12 @@
 ```
 
 - **前端**：纯静态（HTML + CSS + 原生 JS，无框架无构建步骤），索引数据位于 `site/index.html` 与 `site/data/tracks.json`。
-- **边缘代理层**：部署于 Cloudflare Workers 的轻量转发服务——维护免登录会话池，按访客自动分配授权；支持用户注册 / 登录（账号并入动态池，播放下载优先使用本人授权，源站不可用时自动回退共享池）；实时转发音频流并注入 ID3 品牌标签；整站零跳转。
+- **边缘代理层**：部署于 Cloudflare Workers 的轻量转发服务（同域路由，不暴露独立后端地址）——维护免登录授权会话池，访客打开站点即自动获得授权；实时转发音频流并注入 ID3 品牌标签；整站零跳转。
 - **自动化**：GitHub Actions 每日两次自动执行完整流水线（抓取 → 分类 → 清洗 → 构建 → 推送），Pages 自动重新部署。
 
 ## 数据概览
 
-_数据生成时间：2026-10-05T06:42_
+_数据生成时间：2026-10-05T06:44_
 
 | 指标 | 数值 |
 |---|---|
@@ -89,9 +88,8 @@ _数据生成时间：2026-10-05T06:42_
 │   ├── scrape.py          # 抓取公开列表新增曲目（断点续爬）
 │   ├── classify.py        # 分类：单曲/串烧 + 中文/英文 + 统计
 │   ├── clean_bad.py       # 清洗空文件名/零大小脏数据，重算统计
-│   ├── build_site.py      # 静态站点生成器（HTML/CSS/JS/数据/PWA/双API注入）
-│   ├── update_readme.py   # 刷新 README 数据概览（本脚本）
-│   └── enrich_sources.py  # 可选：手动补充来源直连音频地址（不参与流水线）
+│   ├── build_site.py      # 静态站点生成器（HTML/CSS/JS/数据/PWA/同域代理注入）
+│   └── update_readme.py   # 刷新 README 数据概览（本脚本）
 ├── data/                  # 流水线数据（raw_tracks.csv / stats.json / 状态文件）
 ├── pwa-assets/            # PWA 清单、Service Worker 模板、图标
 ├── site/                  # 构建产物 → 部署到 GitHub Pages
@@ -139,7 +137,7 @@ python -m http.server 8000
 ## 部署
 
 1. **GitHub Pages**：仓库 Settings → Pages → Source 选择 *Deploy from a branch* → `main`（`site/` 为部署内容目录）。
-2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定，源码独立维护不公开）。前端内置**多端点自动选择**：启动时并发健康探测自动选取可用端点，绑定自有自定义域可获得更优网络线路。本地构建自动使用空值走 localhost（本地模式不请求代理）。
+2. **边缘代理层**：部署为 Cloudflare Worker（含 KV 绑定，源码独立维护不公开）。前端经**同域 API 路由**请求代理（不暴露独立后端地址），本地构建自动使用空值走 localhost（本地模式不请求代理）。
 
 ## 技术栈
 
