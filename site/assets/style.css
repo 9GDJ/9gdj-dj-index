@@ -241,6 +241,12 @@ main {
   border-color: rgba(79, 209, 197, 0.45);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(79, 209, 197, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+.hero-num.active {
+  border-color: rgba(79, 209, 197, 0.7);
+  box-shadow: 0 0 0 1.5px rgba(79, 209, 197, 0.45), 0 10px 26px rgba(0, 0, 0, 0.32);
+  background: linear-gradient(180deg, rgba(79, 209, 197, 0.14), rgba(18, 21, 27, 0.92));
+}
+.hero-num.active .hero-num-lbl { color: var(--accent); font-weight: 600; }
 .hero-num-val {
   font-size: 1.45rem;
   font-weight: 700;
@@ -705,6 +711,16 @@ body { padding-bottom: 76px; }
   margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
+}
+.fmt-chip {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(79, 209, 197, 0.18), rgba(79, 209, 197, 0.06));
+  border: 1px solid rgba(79, 209, 197, 0.45);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.12), 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 .filter-bar select {
   padding: 7px 12px;

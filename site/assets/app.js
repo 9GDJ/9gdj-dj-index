@@ -353,7 +353,15 @@
       [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {
-      const cell = el('a', {href: it[2], class: 'hero-num', title: '点击查看'});
+      const cq = getQuery();
+      let _act = false;
+      if (it[2] === '?view=all') _act = !cq.format && !cq.lang && !cq.view;
+      else if (it[2] === '?format=single') _act = cq.format === 'single';
+      else if (it[2] === '?format=mashup') _act = cq.format === 'mashup';
+      else if (it[2] === '?lang=zh') _act = cq.lang === 'zh' && !cq.format;
+      else if (it[2] === '?lang=en') _act = cq.lang === 'en' && !cq.format;
+      else if (it[2] === '?view=dates') _act = cq.view === 'dates';
+      const cell = el('a', {href: it[2], class: 'hero-num' + (_act ? ' active' : ''), title: '点击查看'});
       const nEl = el('div', {class: 'hero-num-val', text: '0'});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {class: 'hero-num-lbl', text: it[1]}));
@@ -476,6 +484,8 @@
 
     // 过滤栏
     const bar = el('div', {class: 'filter-bar'});
+    const fmtChip = el('span', {class: 'fmt-chip', text: q.format === 'mashup' ? '串烧' : q.format === 'single' ? '单曲' : (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '全部曲目')});
+    bar.appendChild(fmtChip);
     const fmtSel = el('select');
     [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(([v, label]) => {
       const o = el('option', {value: v, text: label});
@@ -671,6 +681,8 @@
       tip.appendChild(closeBtn);
       document.body.appendChild(tip);
       setTimeout(function() { tip.classList.add('show'); }, 800);
+      // 9 秒倒计时自动消失
+      setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 9000);
     });
     if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
       setTimeout(function() {
@@ -681,6 +693,8 @@
         tip.appendChild(okBtn);
         document.body.appendChild(tip);
         setTimeout(function() { tip.classList.add('show'); }, 100);
+        // 9 秒倒计时自动消失
+        setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 9000);
       }, 4500);
     }
   })();
