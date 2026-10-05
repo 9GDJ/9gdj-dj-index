@@ -123,11 +123,11 @@
     }
   }
 
-  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en|other]/mashup.json），否则拉全量（搜索/全部）
+  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en]/mashup.json），否则拉全量（搜索/全部/其他语言）
   let TRACKS_PROMISE = null;
   const SPLIT_CACHE = {};
   function splitFileName(fmt, lang) {
-    if (fmt === 'single' && lang) return 'data/tracks-single-' + lang + '.json';
+    if (fmt === 'single' && (lang === 'zh' || lang === 'en')) return 'data/tracks-single-' + lang + '.json';
     if (fmt === 'single') return 'data/tracks-single.json';
     if (fmt === 'mashup') return 'data/tracks-mashup.json';
     return '';
@@ -147,7 +147,12 @@
     if (!TRACKS_PROMISE) {
       // 优先读 IndexedDB 本地缓存（秒开），无缓存再下载并写入缓存
       TRACKS_PROMISE = IDB.get('tracks').then(function (cached) {
-        if (cached && cached.length) { ALL_TRACKS = cached; return cached; }
+        // 缓存过期校验：缓存内最新入库日期与 stats.latest_date 一致才复用，否则丢弃缓存重新拉取
+        if (cached && cached.length) {
+          let cachedLatest = null;
+          for (let _i = 0; _i < cached.length; _i++) { const _dd = cached[_i].d; if (_dd && _dd > cachedLatest) cachedLatest = _dd; }
+          if (STATS && STATS.latest_date && cachedLatest === STATS.latest_date) { ALL_TRACKS = cached; return cached; }
+        }
         return fetchData('data/tracks.json');
       }).then(function (t) {
         ALL_TRACKS = t;
@@ -199,9 +204,13 @@
       if (t3) return t3;
       return IDB.get('tracks').then(function (cached) {
         if (cached && cached.length) {
-          ALL_TRACKS = cached;
-          const t4 = cached.find(x => String(x.i) === String(id));
-          if (t4) return t4;
+          let cachedLatest = null;
+          for (let _i = 0; _i < cached.length; _i++) { const _dd = cached[_i].d; if (_dd && _dd > cachedLatest) cachedLatest = _dd; }
+          if (STATS && STATS.latest_date && cachedLatest === STATS.latest_date) {
+            ALL_TRACKS = cached;
+            const t4 = cached.find(x => String(x.i) === String(id));
+            if (t4) return t4;
+          }
         }
         showLoading('正在加载全量曲目索引（首次约 10MB，加载后本地缓存，之后秒开）…');
         return ensureTracks().then(function (arr2) {
