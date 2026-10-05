@@ -905,6 +905,15 @@ footer {
   word-break: break-all;
 }
 .detail-links { margin-bottom: 20px; font-size: 0.85rem; }
+.detail-play-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 2px 0 14px; padding: 12px 30px; border: 0; border-radius: 999px;
+  cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #081018;
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #8b5cf6);
+  box-shadow: 0 4px 18px rgba(139, 92, 246, .35);
+  transition: transform .15s, box-shadow .15s;
+}
+.detail-play-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(139, 92, 246, .5); }
 .detail-links a { color: var(--accent); margin-right: 14px; }
 .detail-links a.track-download {
   display: inline-block;
