@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261022"
+BUILD_VER = "20261023"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -1876,7 +1876,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       document.body.appendChild(tip);
       setTimeout(function() {{ tip.classList.add('show'); }}, 800);
       // 9 秒倒计时自动消失
-      setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 9000);
+      setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 2000);
     }});
     if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {{
       setTimeout(function() {{
@@ -1888,7 +1888,7 @@ def generate_js(total_tracks, page_size, latest_ids):
         document.body.appendChild(tip);
         setTimeout(function() {{ tip.classList.add('show'); }}, 100);
         // 9 秒倒计时自动消失
-        setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 9000);
+        setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 2000);
       }}, 4500);
     }}
   }})();
