@@ -16,7 +16,7 @@ jobs:
       - name: Check API health
         id: check
         env:
-          API_HEALTH: https://api.9gdj.com/api/health
+          API_HEALTH: https://9gdj.com/api/health
           PAGES_STATS: https://9gdj.com/9gdj-dj-index/data/stats.json
         run: |
           api_code=$(curl -s -o /tmp/api.json -w "%{http_code}" --max-time 20 "$API_HEALTH" || echo 000)
