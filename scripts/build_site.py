@@ -18,6 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
+BUILD_VER = "20261018"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -2388,7 +2389,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261017">
+    <link rel="stylesheet" href="assets/style.css?v={BUILD_VER}">
 </head>
 <body>
     <script>
@@ -2592,7 +2593,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261017\"></script>"
+    n2 = "<script src=\"assets/app.js?v=" + BUILD_VER + "\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
@@ -2774,3 +2775,20 @@ if __name__ == "__main__":
             subprocess.run([sys.executable, upd], check=True)
     except Exception as e:
         print("  README 数据概览更新跳过:", e)
+
+    # 构建自校验：JS 语法 + 版本一致性（防止提交旧版本或坏 JS）
+    try:
+        import subprocess, sys as _sys
+        js_path = os.path.join(SITE_DIR, "assets", "app.js")
+        r = subprocess.run(["node", "--check", js_path], capture_output=True, text=True)
+        if r.returncode != 0:
+            print("  [WARN] app.js 语法检查失败:", r.stderr.strip()[:200])
+        else:
+            idx_path = os.path.join(SITE_DIR, "index.html")
+            idx = open(idx_path, encoding="utf-8").read()
+            if ("v=" + BUILD_VER) not in idx:
+                print("  [WARN] index.html 版本号不一致（预期 v=" + BUILD_VER + "）")
+            else:
+                print(f"  自校验通过: app.js 语法 OK / 版本 v{BUILD_VER} 一致")
+    except Exception as e:
+        print("  自校验跳过:", e)
