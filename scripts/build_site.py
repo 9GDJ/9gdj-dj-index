@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261021"
+BUILD_VER = "20261022"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -311,12 +311,6 @@ main {
   border-color: rgba(255, 43, 214, 0.45);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 43, 214, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-.hero-num.active {
-  border-color: rgba(255, 43, 214, 0.7);
-  box-shadow: 0 0 0 1.5px rgba(255, 43, 214, 0.45), 0 10px 26px rgba(0, 0, 0, 0.32);
-  background: linear-gradient(180deg, rgba(255, 43, 214, 0.14), rgba(18, 21, 27, 0.92));
-}
-.hero-num.active .hero-num-lbl { color: var(--accent); font-weight: 600; }
 .hero-num-val {
   font-size: 1.45rem;
   font-weight: 700;
@@ -1556,15 +1550,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {{
-      const cq = getQuery();
-      let _act = false;
-      if (it[2] === '?view=all') _act = !cq.format && !cq.lang && !cq.view;
-      else if (it[2] === '?format=single') _act = cq.format === 'single';
-      else if (it[2] === '?format=mashup') _act = cq.format === 'mashup';
-      else if (it[2] === '?lang=zh') _act = cq.lang === 'zh' && !cq.format;
-      else if (it[2] === '?lang=en') _act = cq.lang === 'en' && !cq.format;
-      else if (it[2] === '?view=dates') _act = cq.view === 'dates';
-      const cell = el('a', {{href: it[2], class: 'hero-num' + (_act ? ' active' : ''), title: '点击查看'}});
+      const cell = el('a', {{href: it[2], class: 'hero-num', title: '点击查看'}});
       const nEl = el('div', {{class: 'hero-num-val', text: '0'}});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {{class: 'hero-num-lbl', text: it[1]}}));
@@ -1736,7 +1722,7 @@ def generate_js(total_tracks, page_size, latest_ids):
       window.scrollTo({{top: 0, behavior: 'smooth'}});
     }});
 
-    updateNav(q.format || q.q || q.date ? 'list' : 'all');
+    updateNav(q.format === 'mashup' ? 'mashup' : q.format === 'single' ? 'single' : (q.q || q.date ? 'list' : 'all'));
     // 从详情返回时恢复列表滚动位置
     const savedScroll = sessionStorage.getItem('dj_list_scroll');
     if (savedScroll) {{
@@ -1827,7 +1813,7 @@ def generate_js(total_tracks, page_size, latest_ids):
   // ── 导航高亮 ──
   function updateNav(active) {{
     document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
-    const map = {{home: 'nav-home', all: 'nav-all', dates: 'nav-dates'}};
+    const map = {{home: 'nav-home', all: 'nav-all', dates: 'nav-dates', single: 'nav-single', mashup: 'nav-mashup'}};
     const id = map[active];
     if (id) {{ const el = document.getElementById(id); if (el) el.classList.add('active'); }}
   }}
@@ -2491,8 +2477,8 @@ def generate_html(stats, latest_tracks):
                 <a href="?" id="nav-home">首页</a>
                 <a href="?view=all" id="nav-all">全部曲目</a>
                 <a href="?view=dates" id="nav-dates">日期归档</a>
-                <a href="?format=single">单曲</a>
-                <a href="?format=mashup">串烧</a>
+                <a href="?format=single" id="nav-single">单曲</a>
+                <a href="?format=mashup" id="nav-mashup">串烧</a>
             </nav>
             <div class="search-box">
                 <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
@@ -2582,7 +2568,7 @@ def apply_js_patches(js):
             "          const nq = getQuery(); nq.page = p; setQuery(nq); renderList();\n"
             "          window.scrollTo({top: 0, behavior: 'smooth'});\n"
             "        });\n"
-            "        updateNav(q.format || q.q || q.date ? 'list' : 'all');\n"
+            "        updateNav(q.format === 'mashup' ? 'mashup' : q.format === 'single' ? 'single' : (q.q || q.date ? 'list' : 'all'));\n"
             "        const savedScroll = sessionStorage.getItem('dj_list_scroll');\n"
             "        if (savedScroll) {\n"
             "          sessionStorage.removeItem('dj_list_scroll');\n"
