@@ -974,6 +974,15 @@ footer {
   word-break: break-all;
 }
 .detail-links { margin-bottom: 20px; font-size: 0.85rem; }
+.detail-play-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 2px 0 14px; padding: 12px 30px; border: 0; border-radius: 999px;
+  cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #081018;
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #8b5cf6);
+  box-shadow: 0 4px 18px rgba(139, 92, 246, .35);
+  transition: transform .15s, box-shadow .15s;
+}
+.detail-play-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(139, 92, 246, .5); }
 .detail-links a { color: var(--accent); margin-right: 14px; }
 .detail-links a.track-download {
   display: inline-block;
@@ -1776,257 +1785,15 @@ def generate_js(total_tracks, page_size, latest_ids):
     links.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}}));
     wrap.appendChild(links);
 
-    // 内嵌波纹播放器（播放爬虫抓取的音频直连地址；无直链时回退官方接口）
-    wrap.appendChild(detailPlayer.render(t.i, t.n, t.au || ''));
+    // 详情页统一使用底部播放栏播放（单播放器架构）：点击播放按钮弹出底部播放器
+    const playBtn = el('button', {{type: 'button', class: 'detail-play-btn', text: '▶  播放试听', title: '播放（使用底部播放器）'}});
+    playBtn.addEventListener('click', function() {{
+      if (typeof player !== 'undefined' && player) player.show(t.i, t.n, t.au || '');
+    }});
+    wrap.appendChild(playBtn);
     m.appendChild(wrap);
     updateNav('home');
   }}
-
-  // ── 详情页内嵌波纹播放器（独立于底部播放栏）──
-  const detailPlayer = (function() {{
-    const box = el('div', {{class: 'detail-player-box'}});
-    // 左：播放控制 + 时间（仿 dj024 三段式，与底部播放栏同款）
-    const left = el('div', {{class: 'player-left'}});
-    const btnPlay = el('button', {{type: 'button', class: 'player-toggle', text: '▶', title: '播放 / 暂停'}});
-    const timeEl = el('div', {{class: 'player-time', text: '0:00 / 0:00'}});
-    left.appendChild(btnPlay);
-    left.appendChild(timeEl);
-    // 中：曲名/状态 + 五彩波形（蒙层进度）
-    const mid = el('div', {{class: 'player-mid'}});
-    const nameEl = el('div', {{class: 'player-name', text: ''}});
-    const statusEl = el('div', {{class: 'player-status'}});
-    const info = el('div', {{class: 'player-info'}});
-    info.appendChild(nameEl);
-    info.appendChild(statusEl);
-    mid.appendChild(info);
-    const canvas = el('canvas', {{class: 'player-wave'}});
-    canvas.width = 460;
-    canvas.height = 48;
-    const ctx = canvas.getContext('2d');
-    mid.appendChild(canvas);
-    // 右：音量 + 单曲循环
-    const right = el('div', {{class: 'player-right'}});
-    const muteBtn = el('button', {{type: 'button', class: 'player-btn', text: '🔊', title: '静音'}});
-    const loopBtn = el('button', {{type: 'button', class: 'player-btn', text: '🔁', title: '单曲循环：关'}});
-    right.appendChild(muteBtn);
-    right.appendChild(loopBtn);
-    box.appendChild(left);
-    box.appendChild(mid);
-    box.appendChild(right);
-
-    const audio = new Audio();
-    audio.preload = 'none';
-    audio.controls = false;
-
-    let animId = null;
-    let failed = false;
-    let useDirect = false;
-    let trackId = null;
-    let apiIdx = 0;
-    function currentApi() {{
-      return (window.API_CANDIDATES && window.API_CANDIDATES[apiIdx]) || API;
-    }}
-
-    function fmt(s) {{
-      if (!isFinite(s) || s < 0) s = 0;
-      return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
-    }}
-
-    function draw() {{
-      const W = canvas.width, H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
-      const t = performance.now() / 1000;
-      const bars = 60;
-      const bw = W / bars;
-      const playing = !audio.paused && !audio.ended && !failed && audio.readyState > 0;
-      for (let i = 0; i < bars; i++) {{
-        const phase = (i / bars) * Math.PI * 2 + t * (playing ? 7 : 2.2);
-        const amp = playing ? 0.92 : 0.16;
-        const h = (Math.sin(phase) * 0.5 + 0.5) * amp * H * 0.78 + (playing ? 5 : 2);
-        const x = i * bw + bw * 0.18;
-        const hue = ((i / bars) * 360 + t * 40) % 360;
-        const grad = ctx.createLinearGradient(0, H / 2 - h, 0, H / 2 + h);
-        grad.addColorStop(0, 'hsl(' + hue + ' 90% 65%)');
-        grad.addColorStop(0.5, 'hsl(' + ((hue + 45) % 360) + ' 95% 55%)');
-        grad.addColorStop(1, 'hsl(' + ((hue + 90) % 360) + ' 90% 60%)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x, H / 2 - h / 2, bw * 0.5, h, 3);
-        else ctx.rect(x, H / 2 - h / 2, bw * 0.5, h);
-        ctx.fill();
-      }}
-      const prog = audio.duration > 0 ? Math.min(1, audio.currentTime / audio.duration) : 0;
-      if (prog < 1) {{
-        ctx.fillStyle = 'rgba(8,12,24,0.55)';
-        ctx.fillRect(prog * W, 0, W * (1 - prog), H);
-      }}
-      if (prog > 0) {{
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillRect(prog * W - 1.5, 0, 3, H);
-      }}
-      animId = requestAnimationFrame(draw);
-    }}
-
-    function stopAnim() {{
-      if (animId) {{ cancelAnimationFrame(animId); animId = null; }}
-    }}
-
-    let loadTimer = null;
-    function playUrl() {{
-      const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
-      audio.src = url;
-      audio.load();
-      if (loadTimer) clearTimeout(loadTimer);
-      loadTimer = setTimeout(function() {{
-        if (audio.readyState < 2 && !failed) {{
-          statusEl.textContent = '';
-          statusEl.appendChild(document.createTextNode('音频源连接超时，请稍后重试。'));
-          if (window.toast) toast('连接超时，请重试');
-        }}
-      }}, 20000);
-      const p = audio.play();
-      if (p && p.catch) p.catch(function() {{}});
-    }}
-
-    function play(id, name, au) {{
-      trackId = id;
-      failed = false;
-      useDirect = !!(au && au.indexOf('http') === 0);
-      apiIdx = 0;
-      nameEl.textContent = name;
-      statusEl.textContent = '';
-      statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
-      btnPlay.textContent = '▶';
-      timeEl.textContent = '0:00 / 0:00';
-      if (!animId) draw();
-      playUrl();
-    }}
-
-    function stop() {{
-      audio.pause();
-      audio.removeAttribute('src');
-      if (loadTimer) {{ clearTimeout(loadTimer); loadTimer = null; }}
-      audio.load();
-      stopAnim();
-      btnPlay.textContent = '▶';
-      nameEl.textContent = '';
-      statusEl.textContent = '';
-    }}
-
-    function markFailed() {{
-      failed = true;
-      btnPlay.textContent = '▶';
-      statusEl.textContent = '';
-      if (useDirect) {{
-        statusEl.appendChild(document.createTextNode('播放失败：音频源连接异常，请稍后重试。'));
-      }} else {{
-        statusEl.appendChild(document.createTextNode('播放失败：请确认已登录后再试。'));
-      }}
-    }}
-
-    let muted = false;
-    let loopOn = false;
-    muteBtn.onclick = function() {{
-      muted = !muted;
-      audio.muted = muted;
-      muteBtn.textContent = muted ? '🔇' : '🔊';
-    }};
-    loopBtn.onclick = function() {{
-      loopOn = !loopOn;
-      audio.loop = loopOn;
-      loopBtn.textContent = loopOn ? '🔁' : '🔁';
-      loopBtn.title = loopOn ? '单曲循环：开' : '单曲循环：关';
-      if (loopOn) {{ loopBtn.style.color = '#fbbf24'; }} else {{ loopBtn.style.color = ''; }}
-    }};
-    btnPlay.onclick = function() {{
-      if (audio.src && !audio.paused) {{ audio.pause(); return; }}
-      if (audio.src) {{
-        if (!animId) draw();
-        const p = audio.play();
-        if (p && p.catch) p.catch(function(e) {{
-          failed = true;
-          statusEl.textContent = '';
-          statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
-        }});
-      }} else {{
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
-        playUrl();
-      }}
-    }};
-    audio.onplaying = function() {{
-      failed = false;
-      btnPlay.textContent = '⏸';
-      statusEl.textContent = '';
-      if (apiIdx > 0) toast('已切换至备用线路');
-    }};
-    audio.onpause = function() {{ btnPlay.textContent = '▶'; }};
-    audio.onended = function() {{ btnPlay.textContent = '▶'; }};
-    let retried = false;
-    audio.onerror = function() {{
-      if (!useDirect && window.API_CANDIDATES && apiIdx + 1 < window.API_CANDIDATES.length) {{
-        apiIdx++;
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode('正在切换备用线路…'));
-        playUrl();
-        return;
-      }}
-      if (!retried) {{
-        retried = true;
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode('线路波动，正在重试…'));
-        toast('播放波动，正在重试…');
-        setTimeout(function() {{
-          playUrl();
-        }}, 800);
-        return;
-      }}
-      markFailed();
-    }};
-    audio.addEventListener('canplay', function() {{ if (loadTimer) {{ clearTimeout(loadTimer); loadTimer = null; }} }});
-    audio.addEventListener('timeupdate', function() {{
-      const d = isFinite(audio.duration) ? audio.duration : 0;
-      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(d);
-    }});
-    canvas.addEventListener('click', function(e) {{
-      if (!isFinite(audio.duration) || audio.duration <= 0) return;
-      const rect = canvas.getBoundingClientRect();
-      audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
-    }});
-    // 整块播放器区域点击也可播放/暂停（canvas 由上面 seek 逻辑接管）
-    box.addEventListener('click', function(e) {{
-      if (e.target === canvas) return;
-      if (audio.src && !audio.paused) {{ audio.pause(); return; }}
-      if (audio.src) {{
-        if (!animId) draw();
-        const p = audio.play();
-        if (p && p.catch) p.catch(function(er) {{
-          failed = true;
-          statusEl.textContent = '';
-          statusEl.appendChild(document.createTextNode('播放失败：' + (er && er.name ? er.name : '未知错误') + '，请重试。'));
-        }});
-      }} else {{
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
-        playUrl();
-      }}
-    }});
-
-    function render(id, name, au) {{
-      // 不预载音频源：点击播放时才建立连接（与底部播放栏一致，规避预载连接卡死/自动播放策略）
-      trackId = id;
-      failed = false;
-      useDirect = !!(au && au.indexOf('http') === 0);
-      nameEl.textContent = name;
-      statusEl.textContent = '';
-      statusEl.appendChild(document.createTextNode(useDirect ? '点击播放（来源站直连）' : '点击播放（站内代理）'));
-      btnPlay.textContent = '▶';
-      timeEl.textContent = '0:00 / 0:00';
-      if (!animId) draw();
-      return box;
-    }}
-    return {{render: render, stop: stop}};
-  }})();
 
   // ── 导航高亮 ──
   function updateNav(active) {{
@@ -2044,7 +1811,6 @@ def generate_js(total_tracks, page_size, latest_ids):
       renderDetail(q.id);
     }} else {{
       document.title = '9GDJ DJ 索引 — 单曲 / 串烧 / 中英文分类';
-      if (typeof detailPlayer !== 'undefined' && detailPlayer) detailPlayer.stop();
       if (q.view === 'dates' || q.date) {{
         if (q.date) renderList();
         else renderDates();
@@ -2622,7 +2388,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261016">
+    <link rel="stylesheet" href="assets/style.css?v=20261017">
 </head>
 <body>
     <script>
@@ -2826,7 +2592,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261016\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261017\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
