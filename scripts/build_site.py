@@ -25,7 +25,6 @@ DATA_DIR = os.path.join(PROJECT_DIR, "data")
 SITE_DIR = os.path.join(PROJECT_DIR, "site")
 
 CLASSIFIED_JSON = os.path.join(DATA_DIR, "classified.json")
-AUDIO_MAP_JSON = os.path.join(DATA_DIR, "audio_map.json")
 STATS_JSON = os.path.join(DATA_DIR, "stats.json")
 
 PAGE_SIZE = 50
@@ -37,15 +36,6 @@ def load_data():
         tracks = json.load(f)
     with open(STATS_JSON, "r", encoding="utf-8") as f:
         stats = json.load(f)
-    # 合并来源音频直连地址（enrich_sources.py 独立产出的 audio_map.json，scrape/classify 不会清空）
-    try:
-        with open(AUDIO_MAP_JSON, "r", encoding="utf-8") as f:
-            au_map = json.load(f)
-        for t in tracks:
-            t["audio_url"] = au_map.get(str(t["id"]), "")
-        print(f"  合并音频直连地址: {len(au_map)} 条")
-    except Exception as e:
-        print(f"  警告: 未合并音频直连地址 ({e})")
     return tracks, stats
 
 
@@ -1315,11 +1305,11 @@ def generate_js(total_tracks, page_size, latest_ids):
     }}
   }}
 
-  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en|other]/mashup.json），否则拉全量（搜索/全部）
+  // 懒加载曲目数据：format/lang 命中分片（tracks-single[-zh|en]/mashup.json），否则拉全量（搜索/全部/其他语言）
   let TRACKS_PROMISE = null;
   const SPLIT_CACHE = {{}};
   function splitFileName(fmt, lang) {{
-    if (fmt === 'single' && lang) return 'data/tracks-single-' + lang + '.json';
+    if (fmt === 'single' && (lang === 'zh' || lang === 'en')) return 'data/tracks-single-' + lang + '.json';
     if (fmt === 'single') return 'data/tracks-single.json';
     if (fmt === 'mashup') return 'data/tracks-mashup.json';
     return '';
@@ -1339,7 +1329,12 @@ def generate_js(total_tracks, page_size, latest_ids):
     if (!TRACKS_PROMISE) {{
       // 优先读 IndexedDB 本地缓存（秒开），无缓存再下载并写入缓存
       TRACKS_PROMISE = IDB.get('tracks').then(function (cached) {{
-        if (cached && cached.length) {{ ALL_TRACKS = cached; return cached; }}
+        // 缓存过期校验：缓存内最新入库日期与 stats.latest_date 一致才复用，否则丢弃缓存重新拉取
+        if (cached && cached.length) {{
+          let cachedLatest = null;
+          for (let _i = 0; _i < cached.length; _i++) {{ const _dd = cached[_i].d; if (_dd && _dd > cachedLatest) cachedLatest = _dd; }}
+          if (STATS && STATS.latest_date && cachedLatest === STATS.latest_date) {{ ALL_TRACKS = cached; return cached; }}
+        }}
         return fetchData('data/tracks.json');
       }}).then(function (t) {{
         ALL_TRACKS = t;
@@ -1388,9 +1383,13 @@ def generate_js(total_tracks, page_size, latest_ids):
       if (t3) return t3;
       return IDB.get('tracks').then(function (cached) {{
         if (cached && cached.length) {{
-          ALL_TRACKS = cached;
-          const t4 = cached.find(x => String(x.i) === String(id));
-          if (t4) return t4;
+          let cachedLatest = null;
+          for (let _i = 0; _i < cached.length; _i++) {{ const _dd = cached[_i].d; if (_dd && _dd > cachedLatest) cachedLatest = _dd; }}
+          if (STATS && STATS.latest_date && cachedLatest === STATS.latest_date) {{
+            ALL_TRACKS = cached;
+            const t4 = cached.find(x => String(x.i) === String(id));
+            if (t4) return t4;
+          }}
         }}
         showLoading('正在加载全量曲目索引（首次约 10MB，加载后本地缓存，之后秒开）…');
         return ensureTracks().then(function (arr2) {{
@@ -2614,7 +2613,7 @@ def generate_html(stats, latest_tracks):
     <meta name="theme-color" content="#0a0f1e">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261013">
+    <link rel="stylesheet" href="assets/style.css?v=20261014">
 </head>
 <body>
     <script>
@@ -2818,7 +2817,7 @@ def apply_html_patches(html):
         html = html.replace(a1, n1)
     # 2) script src 版本号
     a2 = "<script src=\"assets/app.js\"></script>"
-    n2 = "<script src=\"assets/app.js?v=20261013\"></script>"
+    n2 = "<script src=\"assets/app.js?v=20261014\"></script>"
     if html.count(a2) == 1:
         html = html.replace(a2, n2)
     # 3) footer 文案
