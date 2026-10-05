@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261019"
+BUILD_VER = "20261020"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -311,6 +311,12 @@ main {
   border-color: rgba(79, 209, 197, 0.45);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(79, 209, 197, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+.hero-num.active {
+  border-color: rgba(79, 209, 197, 0.7);
+  box-shadow: 0 0 0 1.5px rgba(79, 209, 197, 0.45), 0 10px 26px rgba(0, 0, 0, 0.32);
+  background: linear-gradient(180deg, rgba(79, 209, 197, 0.14), rgba(18, 21, 27, 0.92));
+}
+.hero-num.active .hero-num-lbl { color: var(--accent); font-weight: 600; }
 .hero-num-val {
   font-size: 1.45rem;
   font-weight: 700;
@@ -775,6 +781,16 @@ body { padding-bottom: 76px; }
   margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
+}
+.fmt-chip {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(79, 209, 197, 0.18), rgba(79, 209, 197, 0.06));
+  border: 1px solid rgba(79, 209, 197, 0.45);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.12), 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 .filter-bar select {
   padding: 7px 12px;
@@ -1550,7 +1566,15 @@ def generate_js(total_tracks, page_size, latest_ids):
       [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {{
-      const cell = el('a', {{href: it[2], class: 'hero-num', title: '点击查看'}});
+      const cq = getQuery();
+      let _act = false;
+      if (it[2] === '?view=all') _act = !cq.format && !cq.lang && !cq.view;
+      else if (it[2] === '?format=single') _act = cq.format === 'single';
+      else if (it[2] === '?format=mashup') _act = cq.format === 'mashup';
+      else if (it[2] === '?lang=zh') _act = cq.lang === 'zh' && !cq.format;
+      else if (it[2] === '?lang=en') _act = cq.lang === 'en' && !cq.format;
+      else if (it[2] === '?view=dates') _act = cq.view === 'dates';
+      const cell = el('a', {{href: it[2], class: 'hero-num' + (_act ? ' active' : ''), title: '点击查看'}});
       const nEl = el('div', {{class: 'hero-num-val', text: '0'}});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {{class: 'hero-num-lbl', text: it[1]}}));
@@ -1673,6 +1697,8 @@ def generate_js(total_tracks, page_size, latest_ids):
 
     // 过滤栏
     const bar = el('div', {{class: 'filter-bar'}});
+    const fmtChip = el('span', {{class: 'fmt-chip', text: q.format === 'mashup' ? '串烧' : q.format === 'single' ? '单曲' : (q.lang === 'zh' ? '中文' : q.lang === 'en' ? '英文' : '全部曲目')}});
+    bar.appendChild(fmtChip);
     const fmtSel = el('select');
     [['', '全部格式'], ['single', '单曲'], ['mashup', '串烧']].forEach(([v, label]) => {{
       const o = el('option', {{value: v, text: label}});
@@ -1868,6 +1894,8 @@ def generate_js(total_tracks, page_size, latest_ids):
       tip.appendChild(closeBtn);
       document.body.appendChild(tip);
       setTimeout(function() {{ tip.classList.add('show'); }}, 800);
+      // 9 秒倒计时自动消失
+      setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 9000);
     }});
     if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {{
       setTimeout(function() {{
@@ -1878,6 +1906,8 @@ def generate_js(total_tracks, page_size, latest_ids):
         tip.appendChild(okBtn);
         document.body.appendChild(tip);
         setTimeout(function() {{ tip.classList.add('show'); }}, 100);
+        // 9 秒倒计时自动消失
+        setTimeout(function() {{ var t = document.getElementById(tipId); if (t) t.remove(); }}, 9000);
       }}, 4500);
     }}
   }})();
