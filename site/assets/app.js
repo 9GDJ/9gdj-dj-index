@@ -679,7 +679,7 @@
       document.body.appendChild(tip);
       setTimeout(function() { tip.classList.add('show'); }, 800);
       // 9 秒倒计时自动消失
-      setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 9000);
+      setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 2000);
     });
     if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
       setTimeout(function() {
@@ -691,7 +691,7 @@
         document.body.appendChild(tip);
         setTimeout(function() { tip.classList.add('show'); }, 100);
         // 9 秒倒计时自动消失
-        setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 9000);
+        setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 2000);
       }, 4500);
     }
   })();
