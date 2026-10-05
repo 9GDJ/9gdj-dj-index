@@ -761,13 +761,17 @@
     };
     btnPlay.onclick = function() {
       if (audio.src && !audio.paused) { audio.pause(); return; }
-      if (!animId) draw();
-      const p = audio.play();
-      if (p && p.catch) p.catch(function(e) {
-        failed = true;
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
-      });
+      if (audio.src) {
+        if (!animId) draw();
+        const p = audio.play();
+        if (p && p.catch) p.catch(function(e) {
+          failed = true;
+          statusEl.textContent = '';
+          statusEl.appendChild(document.createTextNode('播放失败：' + (e && e.name ? e.name : '未知错误') + '，请点击播放键重试。'));
+        });
+      } else {
+        playUrl();
+      }
     };
     audio.onplaying = function() {
       failed = false;
@@ -811,19 +815,22 @@
     // 整块播放器区域点击也可播放/暂停（canvas 由上面 seek 逻辑接管）
     box.addEventListener('click', function(e) {
       if (e.target === canvas) return;
-      if (!audio.src) return;
-      if (!audio.paused) { audio.pause(); return; }
-      if (!animId) draw();
-      const p = audio.play();
-      if (p && p.catch) p.catch(function(er) {
-        failed = true;
-        statusEl.textContent = '';
-        statusEl.appendChild(document.createTextNode('播放失败：' + (er && er.name ? er.name : '未知错误') + '，请重试。'));
-      });
+      if (audio.src && !audio.paused) { audio.pause(); return; }
+      if (audio.src) {
+        if (!animId) draw();
+        const p = audio.play();
+        if (p && p.catch) p.catch(function(er) {
+          failed = true;
+          statusEl.textContent = '';
+          statusEl.appendChild(document.createTextNode('播放失败：' + (er && er.name ? er.name : '未知错误') + '，请重试。'));
+        });
+      } else {
+        playUrl();
+      }
     });
 
     function render(id, name, au) {
-      // 预置音频源但不自动播放（避免浏览器自动播放策略拦截）
+      // 不预载音频源：点击播放时才建立连接（与底部播放栏一致，规避预载连接卡死/自动播放策略）
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
@@ -832,8 +839,6 @@
       statusEl.appendChild(document.createTextNode(useDirect ? '点击播放（来源站直连）' : '点击播放（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
-      audio.src = useDirect ? au : API + '/api/audio/' + id + '?cid=' + getCid();
-      audio.load();
       if (!animId) draw();
       return box;
     }
