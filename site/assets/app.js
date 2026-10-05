@@ -353,15 +353,7 @@
       [STATS.today_count || 0, '今日新增', '?view=dates'],
     ];
     nums.forEach(function (it) {
-      const cq = getQuery();
-      let _act = false;
-      if (it[2] === '?view=all') _act = !cq.format && !cq.lang && !cq.view;
-      else if (it[2] === '?format=single') _act = cq.format === 'single';
-      else if (it[2] === '?format=mashup') _act = cq.format === 'mashup';
-      else if (it[2] === '?lang=zh') _act = cq.lang === 'zh' && !cq.format;
-      else if (it[2] === '?lang=en') _act = cq.lang === 'en' && !cq.format;
-      else if (it[2] === '?view=dates') _act = cq.view === 'dates';
-      const cell = el('a', {href: it[2], class: 'hero-num' + (_act ? ' active' : ''), title: '点击查看'});
+      const cell = el('a', {href: it[2], class: 'hero-num', title: '点击查看'});
       const nEl = el('div', {class: 'hero-num-val', text: '0'});
       cell.appendChild(nEl);
       cell.appendChild(el('div', {class: 'hero-num-lbl', text: it[1]}));
@@ -533,7 +525,7 @@
       window.scrollTo({top: 0, behavior: 'smooth'});
     });
 
-    updateNav(q.format || q.q || q.date ? 'list' : 'all');
+    updateNav(q.format === 'mashup' ? 'mashup' : q.format === 'single' ? 'single' : (q.q || q.date ? 'list' : 'all'));
     // 从详情返回时恢复列表滚动位置
     const savedScroll = sessionStorage.getItem('dj_list_scroll');
     if (savedScroll) {
@@ -624,7 +616,7 @@
   // ── 导航高亮 ──
   function updateNav(active) {
     document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
-    const map = {home: 'nav-home', all: 'nav-all', dates: 'nav-dates'};
+    const map = {home: 'nav-home', all: 'nav-all', dates: 'nav-dates', single: 'nav-single', mashup: 'nav-mashup'};
     const id = map[active];
     if (id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
   }

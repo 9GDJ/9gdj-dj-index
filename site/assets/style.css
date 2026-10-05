@@ -241,12 +241,6 @@ main {
   border-color: rgba(255, 43, 214, 0.45);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 43, 214, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-.hero-num.active {
-  border-color: rgba(255, 43, 214, 0.7);
-  box-shadow: 0 0 0 1.5px rgba(255, 43, 214, 0.45), 0 10px 26px rgba(0, 0, 0, 0.32);
-  background: linear-gradient(180deg, rgba(255, 43, 214, 0.14), rgba(18, 21, 27, 0.92));
-}
-.hero-num.active .hero-num-lbl { color: var(--accent); font-weight: 600; }
 .hero-num-val {
   font-size: 1.45rem;
   font-weight: 700;
