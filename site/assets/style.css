@@ -434,6 +434,14 @@ body { padding-bottom: 76px; }
   z-index: 200;
   box-shadow: 0 -4px 26px rgba(0, 0, 0, 0.5);
 }
+/* 详情页内嵌模式：播放器替换"播放试听"按钮位置（不弹底部） */
+.player-inline {
+  position: static;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 14px;
+  margin: 14px 0 4px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
 .player-left {
   display: flex;
   flex-direction: column;

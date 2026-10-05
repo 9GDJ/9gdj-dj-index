@@ -597,10 +597,10 @@
     links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
     wrap.appendChild(links);
 
-    // 详情页统一使用底部播放栏播放（单播放器架构）：点击播放按钮弹出底部播放器
-    const playBtn = el('button', {type: 'button', class: 'detail-play-btn', text: '▶  播放试听', title: '播放（使用底部播放器）'});
+    // 详情页播放：播放器内嵌替换"播放试听"按钮位置（单播放器架构，共享同一 audio）
+    const playBtn = el('button', {type: 'button', class: 'detail-play-btn', text: '▶  播放试听', title: '播放（内嵌播放器）'});
     playBtn.addEventListener('click', function() {
-      if (typeof player !== 'undefined' && player) player.show(t.i, t.n, t.au || '');
+      if (typeof player !== 'undefined' && player) player.show(t.i, t.n, t.au || '', playBtn);
     });
     wrap.appendChild(playBtn);
     m.appendChild(wrap);
@@ -922,7 +922,8 @@
       if (p && p.catch) p.catch(function() {});
     }
 
-    function show(id, name, au) {
+    let inlineAnchor = null;
+    function show(id, name, au, anchor) {
       trackId = id;
       failed = false;
       useDirect = !!(au && au.indexOf('http') === 0);
@@ -933,6 +934,18 @@
       statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       btnPlay.textContent = '▶';
       timeEl.textContent = '0:00 / 0:00';
+      if (anchor && anchor.parentNode) {
+        // 详情页内嵌模式：播放器替换"播放试听"按钮位置（不弹底部栏）
+        inlineAnchor = anchor;
+        anchor.style.display = 'none';
+        bar.classList.add('player-inline');
+        anchor.parentNode.insertBefore(bar, anchor);
+      } else {
+        // 列表模式：底部播放栏
+        inlineAnchor = null;
+        bar.classList.remove('player-inline');
+        document.body.appendChild(bar);
+      }
       bar.style.display = 'flex';
       if (!animId) draw();
       playUrl();
@@ -944,6 +957,14 @@
       if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
       audio.load();
       stopAnim();
+      if (inlineAnchor && inlineAnchor.parentNode) {
+        // 从详情页容器移回 body 并恢复按钮
+        try { bar.parentNode.removeChild(bar); } catch (e) {}
+        inlineAnchor.style.display = '';
+        inlineAnchor = null;
+      }
+      document.body.appendChild(bar);
+      bar.classList.remove('player-inline');
       bar.style.display = 'none';
     }
 
