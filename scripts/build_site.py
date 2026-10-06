@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261024"
+BUILD_VER = "20261025"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -2447,6 +2447,7 @@ def generate_html(stats, latest_tracks):
     <meta name="twitter:title" content="9GDJ DJ 索引">
     <meta name="twitter:description" content="互联网公开曲目元数据索引站，按单曲/串烧、中文/英文分类，支持搜索、日期归档、在线试听与下载。">
     <meta name="theme-color" content="#0a0f1e">
+    <link rel="preconnect" href="https://9gdj.com" crossorigin>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
     <link rel="stylesheet" href="assets/style.css?v={BUILD_VER}">
