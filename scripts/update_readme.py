@@ -35,9 +35,7 @@ rows = [
 ]
 table = "\n".join(f"| {k} | {v} |" for k, v in rows)
 
-readme = f"""<div align="center">
-
-<div style="background:linear-gradient(135deg,#FF2BD6 0%,#A855F7 55%,#6366F1 100%);border-radius:18px;padding:32px 28px;color:#ffffff;margin:0 0 18px;box-shadow:0 8px 28px rgba(255,43,214,.18)">
+readme = f"""<div style="background:linear-gradient(135deg,#FF2BD6 0%,#A855F7 55%,#6366F1 100%);border-radius:18px;padding:32px 28px;color:#ffffff;margin:0 0 18px;box-shadow:0 8px 28px rgba(255,43,214,.18)">
 
 # 🎵 9GDJ DJ Index
 
@@ -115,13 +113,13 @@ flowchart LR
 
 _数据生成时间：{s.get('generated_at', '')[:16]}_
 
-<div align="center">
+**核心指标**：
 
 | 🎵 曲目总数 | 🎧 单曲 | 🔥 串烧 | ✨ 今日新增 |
 |---|---|---|---|
 | **{s.get('total', 0):,}** | {fmt.get('single', 0):,} | {fmt.get('mashup', 0):,} | **{s.get('today_count', 0)}**（{s.get('today', '')}） |
 
-</div>
+**详细分类**：
 
 | 指标 | 数值 |
 |---|---|
@@ -229,15 +227,11 @@ MIT
 
 ---
 
-<div align="center">
-
 **如果喜欢这个项目，欢迎 ⭐ Star 支持！**
 
 > 由 [GitHub Actions](https://github.com/features/actions) 每日自动维护 · 数据概览实时刷新
 >
 > © 2026 9GDJ · 仅供学习交流 · 支持正版
-
-</div>
 """
 
 with open(README, "w", encoding="utf-8", newline="\n") as f:
