@@ -152,29 +152,6 @@ nav a:hover, nav a.active {
 }
 .search-clear:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
 .search-clear.show { display: flex; }
-.search-box button {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  margin-left: 4px;
-  border: none;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FF2BD6, #06b6d4);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  padding: 0;
-}
-.search-box button:hover {
-  background: linear-gradient(135deg, #0d9e6f, #0598b4);
-  box-shadow: 0 3px 12px rgba(255, 43, 214, 0.4);
-  transform: translateY(-1px);
-}
-.search-box button:active { transform: translateY(0); }
 
 /* ── Main ── */
 main {
@@ -222,20 +199,6 @@ main {
   color: var(--text-dim);
 }
 .hero-slogan { margin-top: 10px; font-size: 0.95rem; color: var(--text-dim); }
-.hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.hero-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  letter-spacing: 0.02em;
-  transition: border-color 0.18s, color 0.18s;
-}
-.hero-badge:hover { border-color: rgba(255, 43, 214, 0.4); color: #fff; }
 .hero-nums {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
