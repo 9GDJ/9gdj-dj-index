@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261032"
+BUILD_VER = "20261033"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -141,6 +141,7 @@ nav a {
 }
 .nshort { display: none; }
 .ashort { display: none; }
+#search-open { display: none; }
 nav a:hover, nav a.active {
   background: var(--accent-soft);
   color: var(--accent);
@@ -1087,7 +1088,12 @@ footer {
   .header-inner #auth-auto { padding: 2px 6px !important; font-size: 0.7rem !important; }
   .header-inner #auth-open { padding: 4px 7px !important; gap: 0 !important; font-size: 0 !important; }
   .header-inner #auth-open svg { width: 14px; height: 14px; }
-  .header-inner #auth-logout { display: none !important; }
+  .header-inner #auth-logout { display: inline-flex !important; align-items: center; padding: 2px 7px !important; font-size: 0.7rem !important; }
+  .header-inner #auth-user { padding: 2px 7px !important; font-size: 0.7rem !important; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #search-open { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; background: linear-gradient(135deg, rgba(255, 43, 214, 0.15), rgba(6, 182, 212, 0.15)); border: 1px solid rgba(255, 43, 214, 0.35); color: var(--accent); border-radius: 8px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+  #search-open svg { width: 13px; height: 13px; }
+  .search-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 130; display: none; border-radius: 0 0 10px 10px; padding: 8px 10px; margin-top: 0; background: rgba(16, 18, 26, 0.98); border: 1px solid var(--border); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5); }
+  .search-box.show { display: flex; }
   .detail-title { font-size: 1.08rem; }
   .detail-meta { grid-template-columns: repeat(2, 1fr); }
   .detail-player-box { padding: 12px; }
@@ -1100,10 +1106,10 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 4px; }
   main { padding: 12px 8px 70px; }
-  .search-box { order: 0; max-width: none; flex: 1 1 auto; min-width: 0; margin-top: 0; border-radius: 8px; padding: 2px 2px 2px 8px; }
+  .search-box { max-width: none; margin-top: 0; border-radius: 8px; padding: 8px 10px; }
   .search-icon { margin-right: 4px; }
   .search-icon svg { width: 14px; height: 14px; }
-  .search-box input { padding: 5px 2px; font-size: 0.72rem; min-width: 0; text-overflow: ellipsis; }
+  .search-box input { padding: 5px 2px; font-size: 0.82rem; min-width: 0; text-overflow: ellipsis; }
   .search-clear { width: 22px; height: 22px; font-size: 0.9rem; margin: 0 2px; }
   .search-box button { padding: 9px 14px; font-size: 0.8rem; border-radius: 8px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
@@ -1964,13 +1970,33 @@ def generate_js(total_tracks, page_size, latest_ids):
     const input = $('#search-input');
     const btn = $('#search-btn');
     const clear = $('#search-clear');
+    const so = $('#search-open');
     let t = null;
+    function closePanel() {{
+      if (so) {{
+        const sb = $('.search-box');
+        if (sb) sb.classList.remove('show');
+      }}
+    }}
+    if (so) so.onclick = function(e) {{
+      e.stopPropagation();
+      const sb = $('.search-box');
+      if (sb) {{
+        sb.classList.toggle('show');
+        if (sb.classList.contains('show')) input.focus();
+      }}
+    }};
+    document.addEventListener('click', function(e) {{
+      const sb = $('.search-box');
+      if (sb && sb.classList.contains('show') && !sb.contains(e.target) && !(so && so.contains(e.target))) sb.classList.remove('show');
+    }});
     function syncClear() {{
       if (clear) clear.classList.toggle('show', input.value.length > 0);
     }}
     function doSearch() {{
       const val = input.value.trim();
       syncClear();
+      closePanel();
       if (val) {{
         setQuery({{q: val, page: 1}});
         route();
@@ -2497,6 +2523,7 @@ def generate_html(stats, latest_tracks):
                 <a href="?format=single" id="nav-single">单曲</a>
                 <a href="?format=mashup" id="nav-mashup">串烧</a>
             </nav>
+            <button type="button" id="search-open" aria-label="搜索"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>搜索</span></button>
             <div class="search-box">
                 <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
                 <input type="text" id="search-input" placeholder="搜索曲目名...">
@@ -2608,7 +2635,6 @@ def apply_js_patches(js):
           "    if (!autoEl) return;\n"
           "    const showAuto = function(txt) {\n"
           "      autoEl.style.display = 'inline';\n"
-          "      autoEl.textContent = txt || '🔓 自动授权已开启';\n"
           "      if (userEl) userEl.style.display = 'none';\n"
           "      if (openBtn) openBtn.style.display = 'inline-block';\n"
           "      if (logoutBtn) logoutBtn.style.display = 'none';\n"
