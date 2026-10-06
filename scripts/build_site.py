@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261031"
+BUILD_VER = "20261032"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -140,6 +140,7 @@ nav a {
   transition: all 0.15s;
 }
 .nshort { display: none; }
+.ashort { display: none; }
 nav a:hover, nav a.active {
   background: var(--accent-soft);
   color: var(--accent);
@@ -1075,12 +1076,18 @@ footer {
 
 /* ── Responsive（移动端增强）── */
 @media (max-width: 768px) {
-  .header-inner { flex-wrap: wrap; row-gap: 8px; }
-  .header-inner nav { order: 3; width: 100%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px; max-width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .header-inner nav::-webkit-scrollbar { display: none; }
-  .header-inner nav a { white-space: nowrap; font-size: 0.8rem; padding: 5px 10px; flex-shrink: 0; }
+  .header-inner { flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 4px; }
+  .header-inner nav { order: 0; width: auto; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 1px; max-width: none; overflow: visible; }
+  .header-inner nav a { white-space: nowrap; font-size: 0.68rem; padding: 2px 4px; flex-shrink: 0; }
   .header-inner nav .nfull { display: none; }
   .header-inner nav .nshort { display: inline; }
+  .logo { font-size: 0.85rem; flex-shrink: 0; }
+  .header-inner .afull { display: none !important; }
+  .header-inner .ashort { display: inline-block !important; }
+  .header-inner #auth-auto { padding: 2px 6px !important; font-size: 0.7rem !important; }
+  .header-inner #auth-open { padding: 4px 7px !important; gap: 0 !important; font-size: 0 !important; }
+  .header-inner #auth-open svg { width: 14px; height: 14px; }
+  .header-inner #auth-logout { display: none !important; }
   .detail-title { font-size: 1.08rem; }
   .detail-meta { grid-template-columns: repeat(2, 1fr); }
   .detail-player-box { padding: 12px; }
@@ -1091,12 +1098,12 @@ footer {
   .logo { font-size: 0.95rem; }
   .logo span { display: none; }
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
-  .header-inner { padding: 8px 10px; gap: 8px; }
+  .header-inner { padding: 8px 10px; gap: 4px; }
   main { padding: 12px 8px 70px; }
-  .search-box { max-width: none; flex: 1 1 100%; order: 2; margin-top: 2px; border-radius: 10px; padding: 3px 3px 3px 12px; }
-  .search-icon { margin-right: 8px; }
-  .search-icon svg { width: 16px; height: 16px; }
-  .search-box input { padding: 9px 4px; font-size: 0.82rem; }
+  .search-box { order: 0; max-width: none; flex: 1 1 auto; min-width: 0; margin-top: 0; border-radius: 8px; padding: 2px 2px 2px 8px; }
+  .search-icon { margin-right: 4px; }
+  .search-icon svg { width: 14px; height: 14px; }
+  .search-box input { padding: 5px 2px; font-size: 0.72rem; min-width: 0; text-overflow: ellipsis; }
   .search-clear { width: 22px; height: 22px; font-size: 0.9rem; margin: 0 2px; }
   .search-box button { padding: 9px 14px; font-size: 0.8rem; border-radius: 8px; }
   .section-title { font-size: 1rem; margin: 18px 0 10px; }
@@ -2643,9 +2650,9 @@ def apply_html_patches(html):
           "                <span class=\"auth-entry\" style=\"color:#7cf59c;font-weight:600;\" id=\"auth-auto\">🔓 自动授权已开启</span>\n"
           "            </nav>")
     n1 = ("<nav style=\"gap:4px;align-items:center;flex-wrap:wrap;\">\n"
-          "                <span id=\"auth-auto\" style=\"display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;\">🔓 自动授权已开启</span>\n"
+          "                <span id=\"auth-auto\" style=\"display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;\"><span class=\"afull\">🔓 自动授权已开启</span><span class=\"ashort\">🔓</span></span>\n"
           "                <span id=\"auth-user\" style=\"display:none;background:linear-gradient(135deg,rgba(255,215,94,.18),rgba(255,170,60,.14));border:1px solid rgba(255,215,94,.5);color:#ffd75e;font-weight:700;border-radius:999px;padding:3px 12px;font-size:0.72rem;\"></span>\n"
-          "                <button type=\"button\" id=\"auth-open\" aria-label=\"登录 / 注册\" style=\"display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 13px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.6-6 8-6s8 2 8 6\"/></svg>登录 / 注册</button>\n"
+          "                <button type=\"button\" id=\"auth-open\" aria-label=\"登录 / 注册\" style=\"display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 13px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.6-6 8-6s8 2 8 6\"/></svg><span class=\"afull\">登录 / 注册</span></button>\n"
           "                <button type=\"button\" id=\"auth-logout\" style=\"background:rgba(255,255,255,.06);border:1px solid rgba(255,120,120,.4);color:#ff9d9d;border-radius:999px;padding:4px 12px;font-size:0.72rem;cursor:pointer;display:none;\">退出</button>\n"
           "            </nav>")
     if html.count(a1) == 1:
