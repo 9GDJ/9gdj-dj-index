@@ -62,10 +62,10 @@
 ## 🏗️ 架构
 
 ```mermaid
-flowchart LR
-  A[📄 GitHub Pages<br/>静态站 · 索引数据] -->|同域 /api 路由| B[☁️ Cloudflare Workers<br/>边缘代理层 · 会话池]
-  B -->|实时转发音频流| C[🎵 公开列表 · 音频源]
-  D[⚙️ GitHub Actions<br/>每日 10:00 / 22:00 自动流水线] -.->|抓取 → 分类 → 清洗 → 构建 → 推送| A
+flowchart TB
+  A[📄 GitHub Pages 静态站] -->|同域 /api 路由| B[☁️ Cloudflare Workers 代理层]
+  B -->|实时转发音频流| C[🎵 公开列表音频源]
+  D[⚙️ GitHub Actions 每日流水线] -.->|自动抓取·分类·构建·部署| A
 ```
 
 - **前端**：纯静态（HTML + CSS + 原生 JS，无框架无构建步骤），索引数据位于 `site/index.html` 与 `site/data/tracks.json`。
@@ -74,7 +74,7 @@ flowchart LR
 
 ## 📊 数据概览
 
-_数据生成时间：2026-10-06T07:56_
+_数据生成时间：2026-10-06T08:08_
 
 **核心指标**：
 
