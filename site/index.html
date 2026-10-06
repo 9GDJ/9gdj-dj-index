@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://9gdj.com" crossorigin>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261031">
+    <link rel="stylesheet" href="assets/style.css?v=20261032">
 </head>
 <body>
     <script>
@@ -67,9 +67,9 @@
                 <button type="button" id="search-clear" class="search-clear" aria-label="清空搜索" title="清空搜索">×</button>
             </div>
             <nav style="gap:4px;align-items:center;flex-wrap:wrap;">
-                <span id="auth-auto" style="display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;">🔓 自动授权已开启</span>
+                <span id="auth-auto" style="display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;"><span class="afull">🔓 自动授权已开启</span><span class="ashort">🔓</span></span>
                 <span id="auth-user" style="display:none;background:linear-gradient(135deg,rgba(255,215,94,.18),rgba(255,170,60,.14));border:1px solid rgba(255,215,94,.5);color:#ffd75e;font-weight:700;border-radius:999px;padding:3px 12px;font-size:0.72rem;"></span>
-                <button type="button" id="auth-open" aria-label="登录 / 注册" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 13px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>登录 / 注册</button>
+                <button type="button" id="auth-open" aria-label="登录 / 注册" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 13px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span class="afull">登录 / 注册</span></button>
                 <button type="button" id="auth-logout" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,120,120,.4);color:#ff9d9d;border-radius:999px;padding:4px 12px;font-size:0.72rem;cursor:pointer;display:none;">退出</button>
             </nav>
         </div>
@@ -80,7 +80,7 @@
     <footer>
         <p>数据来源：互联网 公开列表 | 仅元数据索引，不存储音频文件 | 共 91,701 首曲目</p>
         <p>打开即可试听、下载（系统自动授权已开启；也可自行注册/登录）</p>
-        <p>生成时间：2026-10-06 10:28:47 | 分类阈值：≥100.0 MiB 即为串烧</p>
+        <p>生成时间：2026-10-06 10:36:18 | 分类阈值：≥100.0 MiB 即为串烧</p>
     </footer>
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-modal">
@@ -116,6 +116,6 @@
             navigator.serviceWorker.register('./sw.js').catch(function () {});
         }
     </script>
-    <script src="assets/app.js?v=20261031"></script>
+    <script src="assets/app.js?v=20261032"></script>
 </body>
 </html>
