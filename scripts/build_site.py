@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261033"
+BUILD_VER = "20261034"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -1088,7 +1088,7 @@ footer {
   .header-inner #auth-auto { padding: 2px 6px !important; font-size: 0.7rem !important; }
   .header-inner #auth-open { padding: 4px 7px !important; gap: 0 !important; font-size: 0 !important; }
   .header-inner #auth-open svg { width: 14px; height: 14px; }
-  .header-inner #auth-logout { display: inline-flex !important; align-items: center; padding: 2px 7px !important; font-size: 0.7rem !important; }
+  .header-inner #auth-logout { padding: 2px 7px !important; font-size: 0.7rem !important; }
   .header-inner #auth-user { padding: 2px 7px !important; font-size: 0.7rem !important; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #search-open { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; background: linear-gradient(135deg, rgba(255, 43, 214, 0.15), rgba(6, 182, 212, 0.15)); border: 1px solid rgba(255, 43, 214, 0.35); color: var(--accent); border-radius: 8px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
   #search-open svg { width: 13px; height: 13px; }
