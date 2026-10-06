@@ -37,11 +37,15 @@ table = "\n".join(f"| {k} | {v} |" for k, v in rows)
 
 readme = f"""<div align="center">
 
+<div style="background:linear-gradient(135deg,#FF2BD6 0%,#A855F7 55%,#6366F1 100%);border-radius:18px;padding:32px 28px;color:#ffffff;margin:0 0 18px;box-shadow:0 8px 28px rgba(255,43,214,.18)">
+
 # 🎵 9GDJ DJ Index
 
 **互联网公开曲目 · 元数据索引站**
 
 纯静态 GitHub Pages 站点，索引**互联网公开列表**中的舞曲曲目元数据，按 **单曲 / 串烧 × 中文 / 英文** 分类，支持搜索、日期归档、页内试听与一键下载。
+
+</div>
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-222222?logo=github&logoColor=white)](https://9gdj.com/9gdj-dj-index/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -96,12 +100,11 @@ readme = f"""<div align="center">
 
 ## 🏗️ 架构
 
-```
-┌─────────────────┐      ┌──────────────────────┐      ┌──────────────────┐
-│   GitHub Pages   │      │   边缘代理层           │      │   公开列表 / 音频流 │
-│   静态站 + 索引数据 │ ───▶ │  （Cloudflare Workers│ ───▶ │                  │
-│   index/tracks   │      │   会话池 · 实时转发    │      │   来源站           │
-└─────────────────┘      └──────────────────────┘      └──────────────────┘
+```mermaid
+flowchart LR
+  A[📄 GitHub Pages<br/>静态站 · 索引数据] -->|同域 /api 路由| B[☁️ Cloudflare Workers<br/>边缘代理层 · 会话池]
+  B -->|实时转发音频流| C[🎵 公开列表 · 音频源]
+  D[⚙️ GitHub Actions<br/>每日 10:00 / 22:00 自动流水线] -.->|抓取 → 分类 → 清洗 → 构建 → 推送| A
 ```
 
 - **前端**：纯静态（HTML + CSS + 原生 JS，无框架无构建步骤），索引数据位于 `site/index.html` 与 `site/data/tracks.json`。
@@ -111,6 +114,14 @@ readme = f"""<div align="center">
 ## 📊 数据概览
 
 _数据生成时间：{s.get('generated_at', '')[:16]}_
+
+<div align="center">
+
+| 🎵 曲目总数 | 🎧 单曲 | 🔥 串烧 | ✨ 今日新增 |
+|---|---|---|---|
+| **{s.get('total', 0):,}** | {fmt.get('single', 0):,} | {fmt.get('mashup', 0):,} | **{s.get('today_count', 0)}**（{s.get('today', '')}） |
+
+</div>
 
 | 指标 | 数值 |
 |---|---|
