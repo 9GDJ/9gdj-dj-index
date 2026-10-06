@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261030"
+BUILD_VER = "20261031"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -1075,9 +1075,10 @@ footer {
 
 /* ── Responsive（移动端增强）── */
 @media (max-width: 768px) {
-  .header-inner { flex-wrap: wrap; }
-  .header-inner nav { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; max-width: 100%; overflow: visible; }
-  .header-inner nav a { white-space: nowrap; font-size: 0.74rem; padding: 3px 7px; flex-shrink: 0; }
+  .header-inner { flex-wrap: wrap; row-gap: 8px; }
+  .header-inner nav { order: 3; width: 100%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px; max-width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .header-inner nav::-webkit-scrollbar { display: none; }
+  .header-inner nav a { white-space: nowrap; font-size: 0.8rem; padding: 5px 10px; flex-shrink: 0; }
   .header-inner nav .nfull { display: none; }
   .header-inner nav .nshort { display: inline; }
   .detail-title { font-size: 1.08rem; }
@@ -1092,7 +1093,7 @@ footer {
   .auth-entry { font-size: 0.68rem; padding: 2px 6px; }
   .header-inner { padding: 8px 10px; gap: 8px; }
   main { padding: 12px 8px 70px; }
-  .search-box { max-width: none; flex: 1 1 100%; order: 5; margin-top: 2px; border-radius: 10px; padding: 3px 3px 3px 12px; }
+  .search-box { max-width: none; flex: 1 1 100%; order: 2; margin-top: 2px; border-radius: 10px; padding: 3px 3px 3px 12px; }
   .search-icon { margin-right: 8px; }
   .search-icon svg { width: 16px; height: 16px; }
   .search-box input { padding: 9px 4px; font-size: 0.82rem; }
