@@ -41,11 +41,17 @@ readme = f"""# 9GDJ DJ Index
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Edge%20Proxy-Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)
-[![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)
 
 纯静态 [GitHub Pages](https://pages.github.com/) 站点：索引**互联网公开列表**中的舞曲曲目元数据，按**单曲 / 串烧**、**中文 / 英文**分类，支持搜索、日期归档、页内试听与一键下载。
 
-> 本项目仅抓取和展示公开列表中的**元数据**（文件名、大小、入库时间、来源链接），**不下载、不存储、不转存任何音频文件**。站内「试听 / 下载」由边缘代理层按需实时转发音频流（不缓存、不落盘）。
+> 本项目为**个人爱好项目**，仅用于学习交流与技术实践，无任何商业用途。站内仅抓取和展示公开列表中的**元数据**（文件名、大小、入库时间、来源链接），**不下载、不存储、不转存任何音频文件**；「试听 / 下载」由边缘代理层按需实时转发音频流（不缓存、不落盘）。
+
+## 关于本项目
+
+- **性质**：个人兴趣驱动的开源练习项目，由作者业余时间维护。
+- **目的**：练习 Python 数据流水线、静态站点生成、边缘计算代理与前端交互开发。
+- **数据**：全部曲目元数据来自**互联网公开列表**，本站不拥有、不存储任何音频内容。
+- **态度**：欢迎 Star / Fork / Issue 交流；若相关权利人认为展示不妥，请联系作者移除对应条目。
 
 ## 功能特性
 
@@ -171,9 +177,21 @@ python -m http.server 8000
 - 边缘代理层：Cloudflare Workers（KV 会话存储）
 - 托管：GitHub Pages + GitHub Actions
 
+## 版权声明与免责声明
+
+- **数据来源**：本站所有曲目元数据（文件名、大小、入库时间、来源链接）采集自**互联网公开列表**，仅作技术演示与个人学习之用。
+- **内容权属**：曲目名称、音频内容的著作权归原作者 / 原权利人所有。本站不存储、不缓存、不转存任何音频文件，试听 / 下载均为按需实时转发。
+- **非商业用途**：本项目为个人爱好项目，无商业行为，不以任何形式获利。
+- **请支持正版**：建议前往官方渠道收听、下载正版内容。若您是相关权利人且认为本站展示不妥，请通过 Issue 或联系方式告知，我们将在核实后尽快移除对应条目。
+- **使用风险**：本项目按现状提供，作者不对因使用本项目产生的任何直接或间接损失承担责任。
+
 ## License
 
 MIT
+
+---
+
+> 由 [GitHub Actions](https://github.com/features/actions) 每日自动维护 · 数据概览实时刷新
 """
 
 with open(README, "w", encoding="utf-8", newline="\n") as f:
