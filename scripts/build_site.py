@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261029"
+BUILD_VER = "20261030"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -139,6 +139,7 @@ nav a {
   font-size: 0.88rem;
   transition: all 0.15s;
 }
+.nshort { display: none; }
 nav a:hover, nav a.active {
   background: var(--accent-soft);
   color: var(--accent);
@@ -1075,8 +1076,10 @@ footer {
 /* ── Responsive（移动端增强）── */
 @media (max-width: 768px) {
   .header-inner { flex-wrap: wrap; }
-  .header-inner nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 100%; overflow: visible; }
-  .header-inner nav a { white-space: nowrap; font-size: 0.78rem; padding: 4px 8px; flex-shrink: 0; }
+  .header-inner nav { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; max-width: 100%; overflow: visible; }
+  .header-inner nav a { white-space: nowrap; font-size: 0.74rem; padding: 3px 7px; flex-shrink: 0; }
+  .header-inner nav .nfull { display: none; }
+  .header-inner nav .nshort { display: inline; }
   .detail-title { font-size: 1.08rem; }
   .detail-meta { grid-template-columns: repeat(2, 1fr); }
   .detail-player-box { padding: 12px; }
@@ -2481,8 +2484,8 @@ def generate_html(stats, latest_tracks):
             </div>
             <nav>
                 <a href="?" id="nav-home">首页</a>
-                <a href="?view=all" id="nav-all">全部曲目</a>
-                <a href="?view=dates" id="nav-dates">日期归档</a>
+                <a href="?view=all" id="nav-all"><span class="nfull">全部曲目</span><span class="nshort">全部</span></a>
+                <a href="?view=dates" id="nav-dates"><span class="nfull">日期归档</span><span class="nshort">归档</span></a>
                 <a href="?format=single" id="nav-single">单曲</a>
                 <a href="?format=mashup" id="nav-mashup">串烧</a>
             </nav>
