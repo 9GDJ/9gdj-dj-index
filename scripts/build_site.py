@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261027"
+BUILD_VER = "20261028"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -1075,9 +1075,9 @@ footer {
 /* ── Responsive（移动端增强）── */
 @media (max-width: 768px) {
   .header-inner { flex-wrap: wrap; }
-  .header-inner nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; max-width: 100%; }
-  .header-inner nav::-webkit-scrollbar { display: none; }
-  .header-inner nav a { white-space: nowrap; flex-shrink: 0; }
+  .header-inner nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 100%; overflow: visible; }
+  .header-inner nav a { white-space: nowrap; font-size: 0.78rem; padding: 4px 8px; flex-shrink: 0; }
+  .header-inner nav #nav-home { display: none; }
   .detail-title { font-size: 1.08rem; }
   .detail-meta { grid-template-columns: repeat(2, 1fr); }
   .detail-player-box { padding: 12px; }
