@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261026"
+BUILD_VER = "20261027"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -222,29 +222,6 @@ nav a:hover, nav a.active {
 }
 .search-clear:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
 .search-clear.show { display: flex; }
-.search-box button {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  margin-left: 4px;
-  border: none;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FF2BD6, #06b6d4);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  padding: 0;
-}
-.search-box button:hover {
-  background: linear-gradient(135deg, #0d9e6f, #0598b4);
-  box-shadow: 0 3px 12px rgba(255, 43, 214, 0.4);
-  transform: translateY(-1px);
-}
-.search-box button:active { transform: translateY(0); }
 
 /* ── Main ── */
 main {
@@ -292,20 +269,6 @@ main {
   color: var(--text-dim);
 }
 .hero-slogan { margin-top: 10px; font-size: 0.95rem; color: var(--text-dim); }
-.hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.hero-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  letter-spacing: 0.02em;
-  transition: border-color 0.18s, color 0.18s;
-}
-.hero-badge:hover { border-color: rgba(255, 43, 214, 0.4); color: #fff; }
 .hero-nums {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -1570,11 +1533,6 @@ def generate_js(total_tracks, page_size, latest_ids):
     hTitle.appendChild(el('span', {{class: 'hero-sub', text: 'DJ INDEX'}}));
     hero.appendChild(hTitle);
     hero.appendChild(el('div', {{class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}}));
-    const heroBadges = el('div', {{class: 'hero-badges'}});
-    ['每日 10/22 更新', '免登录自动授权', '页内试听', '一键下载'].forEach(function (b) {{
-      heroBadges.appendChild(el('span', {{class: 'hero-badge', text: b}}));
-    }});
-    hero.appendChild(heroBadges);
     const heroNums = el('div', {{class: 'hero-nums'}});
     const nums = [
       [STATS.total, '曲目总数', '?view=all'],
@@ -2027,7 +1985,7 @@ def generate_js(total_tracks, page_size, latest_ids):
         route();
       }}
     }};
-    btn.onclick = doSearch;
+    if (btn) btn.onclick = doSearch;
     input.addEventListener('input', onInput);
     input.addEventListener('keydown', e => {{
       if (e.key === 'Enter') {{ clearTimeout(t); doSearch(); }}
@@ -2533,7 +2491,6 @@ def generate_html(stats, latest_tracks):
                 <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
                 <input type="text" id="search-input" placeholder="搜索曲目名...">
                 <button type="button" id="search-clear" class="search-clear" aria-label="清空搜索" title="清空搜索">×</button>
-                <button id="search-btn" aria-label="搜索" title="搜索"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
             </div>
             <nav style="gap:2px;">
                 <span class="auth-entry" style="color:#7cf59c;font-weight:600;" id="auth-auto">🔓 自动授权已开启</span>
@@ -2685,6 +2642,7 @@ def apply_html_patches(html):
     n1 = ("<nav style=\"gap:4px;align-items:center;flex-wrap:wrap;\">\n"
           "                <span id=\"auth-auto\" style=\"display:inline-block;background:linear-gradient(135deg,rgba(46,204,113,.18),rgba(0,191,255,.14));border:1px solid rgba(46,204,113,.45);color:#7cf59c;font-weight:600;border-radius:999px;padding:3px 12px;font-size:0.72rem;letter-spacing:.02em;\">🔓 自动授权已开启</span>\n"
           "                <span id=\"auth-user\" style=\"display:none;background:linear-gradient(135deg,rgba(255,215,94,.18),rgba(255,170,60,.14));border:1px solid rgba(255,215,94,.5);color:#ffd75e;font-weight:700;border-radius:999px;padding:3px 12px;font-size:0.72rem;\"></span>\n"
+          "                <button type=\"button\" id=\"auth-open\" aria-label=\"登录 / 注册\" style=\"display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border:none;color:#fff;border-radius:999px;padding:5px 13px;font-size:0.74rem;font-weight:600;cursor:pointer;box-shadow:0 0 14px rgba(124,58,237,.35);transition:transform .15s,box-shadow .15s;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.6-6 8-6s8 2 8 6\"/></svg>登录 / 注册</button>\n"
           "                <button type=\"button\" id=\"auth-logout\" style=\"background:rgba(255,255,255,.06);border:1px solid rgba(255,120,120,.4);color:#ff9d9d;border-radius:999px;padding:4px 12px;font-size:0.72rem;cursor:pointer;display:none;\">退出</button>\n"
           "            </nav>")
     if html.count(a1) == 1:
