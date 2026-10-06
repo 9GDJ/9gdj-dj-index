@@ -343,6 +343,11 @@
     hTitle.appendChild(el('span', {class: 'hero-sub', text: 'DJ INDEX'}));
     hero.appendChild(hTitle);
     hero.appendChild(el('div', {class: 'hero-slogan', text: '每日更新 · 互联网公开舞曲索引 · 打开即听即下'}));
+    const heroBadges = el('div', {class: 'hero-badges'});
+    ['每日 10/22 更新', '免登录自动授权', '页内试听', '一键下载'].forEach(function (b) {
+      heroBadges.appendChild(el('span', {class: 'hero-badge', text: b}));
+    });
+    hero.appendChild(heroBadges);
     const heroNums = el('div', {class: 'hero-nums'});
     const nums = [
       [STATS.total, '曲目总数', '?view=all'],
@@ -1191,6 +1196,9 @@
     const btn = e.target.closest ? e.target.closest('.act-listen') : null;
     if (btn) {
       e.preventDefault();
+      document.querySelectorAll('.track-table tr.playing').forEach(function (r) { r.classList.remove('playing'); });
+      const tr = btn.closest ? btn.closest('tr') : null;
+      if (tr) tr.classList.add('playing');
       player.show(btn.dataset.id, btn.dataset.name, btn.dataset.au);
     }
   });
