@@ -1,20 +1,18 @@
-<div style="background:linear-gradient(135deg,#FF2BD6 0%,#A855F7 55%,#6366F1 100%);border-radius:18px;padding:32px 28px;color:#ffffff;margin:0 0 18px;box-shadow:0 8px 28px rgba(255,43,214,.18)">
+<div style="background:linear-gradient(135deg,#FF2BD6 0%,#A855F7 55%,#6366F1 100%);border-radius:14px;padding:18px 22px;color:#ffffff;margin:0 0 14px;box-shadow:0 6px 20px rgba(255,43,214,.15)">
 
 # 🎵 9GDJ DJ Index
 
-**互联网公开曲目 · 元数据索引站**
+**互联网公开曲目 · 元数据索引站** · 纯静态 GitHub Pages，支持搜索 / 日期归档 / 页内试听 / 一键下载
 
-纯静态 GitHub Pages 站点，索引**互联网公开列表**中的舞曲曲目元数据，按 **单曲 / 串烧 × 中文 / 英文** 分类，支持搜索、日期归档、页内试听与一键下载。
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-ffffff?style=flat&logo=github&logoColor=white&labelColor=222222)](https://9gdj.com/9gdj-dj-index/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Edge Proxy](https://img.shields.io/badge/Edge%20Proxy-Workers-F38020?style=flat&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?style=flat&logo=pwa&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+[![Data](https://img.shields.io/badge/Data-每日自动更新-00C853?style=flat)]()
+[![PRs](https://img.shields.io/badge/PRs-Welcome-ff69b4?style=flat)](https://github.com/9GDJ/9gdj-dj-index/pulls)
 
 </div>
-
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-222222?logo=github&logoColor=white)](https://9gdj.com/9gdj-dj-index/)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Edge Proxy](https://img.shields.io/badge/Edge%20Proxy-Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
-[![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Data](https://img.shields.io/badge/Data-每日自动更新-00C853)]()
-[![PRs](https://img.shields.io/badge/PRs-Welcome-ff69b4)](https://github.com/9GDJ/9gdj-dj-index/pulls)
 
 > 🧡 个人爱好项目 · 仅用于学习交流与技术实践 · 无任何商业用途
 >
@@ -24,17 +22,7 @@
 
 ## 📚 目录
 
-- [关于本项目](#-关于本项目)
-- [功能特性](#-功能特性)
-- [架构](#-架构)
-- [数据概览](#-数据概览)
-- [分类规则](#-分类规则)
-- [项目结构](#-项目结构)
-- [本地运行](#-本地运行)
-- [自动更新](#-自动更新github-actions)
-- [部署](#-部署)
-- [技术栈](#-技术栈)
-- [版权声明与免责声明](#-版权声明与免责声明)
+[关于](#-关于本项目) · [功能](#-功能特性) · [架构](#-架构) · [数据概览](#-数据概览) · [分类规则](#-分类规则) · [项目结构](#-项目结构) · [本地运行](#-本地运行) · [自动更新](#-自动更新github-actions) · [部署](#-部署) · [技术栈](#-技术栈) · [版权](#-版权声明与免责声明)
 
 ---
 
@@ -47,17 +35,15 @@
 
 ## ✨ 功能特性
 
-- 🚀 **首页 Hero 品牌区**：曲目总数 / 单曲 / 串烧 / 中文 / 英文 / 今日新增 六项统计 + 分类入口 + 最新入库曲目
-- ⚡ **秒开首屏**：优先加载**最近 30 天**轻量索引（数百 KB），首屏即时渲染；翻页越界或点击「加载全部历史」再按需拉取全量数据（全量索引自动写入浏览器本地缓存，二次访问秒开）
+- 🚀 **品牌 Hero**：曲目总数 / 单曲 / 串烧 / 中文 / 英文 / 今日新增 六项统计 + 分类入口 + 最新入库
+- ⚡ **秒开首屏**：最近 30 天轻量索引先渲染，全量按需加载并缓存至本地
 - 🗂️ **分类浏览**：单曲 / 串烧 × 中文 / 英文组合筛选
-- 📄 **全部曲目**：分页浏览，格式 / 语言下拉筛选
-- 🔍 **搜索**：基于文件名的即时模糊搜索（大小写不敏感）
+- 🔍 **全文搜索**：文件名即时模糊匹配（大小写不敏感）
 - 📅 **日期归档**：全部入库日期网格，点击查看当天曲目
-- 🎧 **页内试听**：不跳转，科技风**五彩波纹播放器**（Canvas 动态波形 + 蒙层进度 + 点击波形跳转进度），播放源经同域代理实时转发
-- ⬇️ **一键下载**：保留原始文件名；**ID3 品牌化**：艺术家 / 唱片集 / 流派标记为本站品牌（标题保留原值）
-- 🔑 **免登录自动授权**：打开站点即自动获得试听 / 下载权限，无需注册；同一访客复用授权会话
-- 📱 **移动端适配**：卡片化布局、整卡点击、首屏懒加载、滚动位置记忆
-- 📦 **PWA**：可安装；Service Worker 缓存静态资源（缓存名随构建自动版本化）
+- 🎧 **页内试听**：五彩波纹播放器（Canvas 动态波形 + 蒙层进度），同域代理实时转发
+- ⬇️ **一键下载**：保留原始文件名 + ID3 品牌化（艺术家 / 唱片集 / 流派）
+- 🔑 **免登录授权**：打开站点即自动获得权限，会话复用
+- 📱 **移动端适配** + 📦 **PWA 可安装**
 
 ## 🏗️ 架构
 
@@ -74,7 +60,7 @@ flowchart TB
 
 ## 📊 数据概览
 
-_数据生成时间：2026-10-06T08:08_
+_数据生成时间：2026-10-06T08:33_
 
 **核心指标**：
 
@@ -82,7 +68,8 @@ _数据生成时间：2026-10-06T08:08_
 |---|---|---|---|
 | **91,700** | 90,109 | 1,591 | **74**（2026-10-06） |
 
-**详细分类**：
+<details>
+<summary><b>📊 详细分类</b>（点击展开）</summary>
 
 | 指标 | 数值 |
 |---|---|
@@ -99,6 +86,8 @@ _数据生成时间：2026-10-06T08:08_
 | 入库日期范围 | 2024-09-20 ~ 2026-10-06（713 天） |
 | 今日新增 | 74（2026-10-06） |
 | 串烧大小阈值 | ≥ 100 MiB |
+
+</details>
 
 ## 🧭 分类规则
 
@@ -202,8 +191,5 @@ MIT
 
 ---
 
-**如果喜欢这个项目，欢迎 ⭐ Star 支持！**
-
-> 由 [GitHub Actions](https://github.com/features/actions) 每日自动维护 · 数据概览实时刷新
->
+> ⭐ 欢迎 Star 支持 · 由 [GitHub Actions](https://github.com/features/actions) 每日自动维护 · 数据概览实时刷新
 > © 2026 9GDJ · 仅供学习交流 · 支持正版
