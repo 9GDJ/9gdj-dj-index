@@ -763,7 +763,6 @@
     if (!autoEl) return;
     const showAuto = function(txt) {
       autoEl.style.display = 'inline';
-      autoEl.textContent = txt || '🔓 自动授权已开启';
       if (userEl) userEl.style.display = 'none';
       if (openBtn) openBtn.style.display = 'inline-block';
       if (logoutBtn) logoutBtn.style.display = 'none';
@@ -785,13 +784,33 @@
     const input = $('#search-input');
     const btn = $('#search-btn');
     const clear = $('#search-clear');
+    const so = $('#search-open');
     let t = null;
+    function closePanel() {
+      if (so) {
+        const sb = $('.search-box');
+        if (sb) sb.classList.remove('show');
+      }
+    }
+    if (so) so.onclick = function(e) {
+      e.stopPropagation();
+      const sb = $('.search-box');
+      if (sb) {
+        sb.classList.toggle('show');
+        if (sb.classList.contains('show')) input.focus();
+      }
+    };
+    document.addEventListener('click', function(e) {
+      const sb = $('.search-box');
+      if (sb && sb.classList.contains('show') && !sb.contains(e.target) && !(so && so.contains(e.target))) sb.classList.remove('show');
+    });
     function syncClear() {
       if (clear) clear.classList.toggle('show', input.value.length > 0);
     }
     function doSearch() {
       const val = input.value.trim();
       syncClear();
+      closePanel();
       if (val) {
         setQuery({q: val, page: 1});
         route();

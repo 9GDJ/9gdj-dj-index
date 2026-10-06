@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://9gdj.com" crossorigin>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./assets/icon-192.png">
-    <link rel="stylesheet" href="assets/style.css?v=20261032">
+    <link rel="stylesheet" href="assets/style.css?v=20261033">
 </head>
 <body>
     <script>
@@ -61,6 +61,7 @@
                 <a href="?format=single" id="nav-single">单曲</a>
                 <a href="?format=mashup" id="nav-mashup">串烧</a>
             </nav>
+            <button type="button" id="search-open" aria-label="搜索"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>搜索</span></button>
             <div class="search-box">
                 <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
                 <input type="text" id="search-input" placeholder="搜索曲目名...">
@@ -80,7 +81,7 @@
     <footer>
         <p>数据来源：互联网 公开列表 | 仅元数据索引，不存储音频文件 | 共 91,701 首曲目</p>
         <p>打开即可试听、下载（系统自动授权已开启；也可自行注册/登录）</p>
-        <p>生成时间：2026-10-06 10:36:18 | 分类阈值：≥100.0 MiB 即为串烧</p>
+        <p>生成时间：2026-10-06 10:47:11 | 分类阈值：≥100.0 MiB 即为串烧</p>
     </footer>
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-modal">
@@ -116,6 +117,6 @@
             navigator.serviceWorker.register('./sw.js').catch(function () {});
         }
     </script>
-    <script src="assets/app.js?v=20261032"></script>
+    <script src="assets/app.js?v=20261033"></script>
 </body>
 </html>
