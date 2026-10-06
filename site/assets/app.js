@@ -918,6 +918,9 @@
 
     let loadTimer = null;
     function playUrl() {
+      // 每次加载前更新状态（首次点击播放时也适用）
+      statusEl.textContent = '';
+      statusEl.appendChild(document.createTextNode(useDirect ? '正在连接音频源…（来源站直连，无需登录）' : '正在连接音频源…（站内代理）'));
       const url = useDirect ? au : currentApi() + '/api/audio/' + trackId + '?cid=' + getCid();
       audio.src = url;
       audio.load();
@@ -1016,8 +1019,15 @@
     };
     closeBtn.onclick = hide;
     btnPlay.onclick = function() {
-      if (audio.paused) { const p = audio.play(); if (p && p.catch) p.catch(function() {}); }
-      else audio.pause();
+      if (audio.paused) {
+        if (!audio.src) {
+          // 详情页"已就绪"模式：首次点击需先加载音频源再播放
+          playUrl();
+        } else {
+          const p = audio.play();
+          if (p && p.catch) p.catch(function() {});
+        }
+      } else audio.pause();
     };
     audio.onplaying = function() {
       failed = false;
