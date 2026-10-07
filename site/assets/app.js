@@ -657,7 +657,15 @@
 
   // ── PWA 安装引导（移动端；iOS 文字引导，Android 原生安装）──
   (function() {
+    // 已安装 / 已加入主屏幕运行 → 不再提示
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
+    if (localStorage.getItem('dj_pwa_installed')) return;
+    const iosSeen = localStorage.getItem('dj_pwa_ios_seen');
+    if (iosSeen && Date.now() - Number(iosSeen) < 7 * 864e5) return;
+    // 安装完成（Android）→ 永久记录，后续不再提示
+    window.addEventListener('appinstalled', function() {
+      localStorage.setItem('dj_pwa_installed', '1');
+    });
     let deferredPrompt = null;
     const tipId = 'pwa-install-tip';
     function makeTip(text) {
@@ -678,7 +686,7 @@
       tip.appendChild(closeBtn);
       document.body.appendChild(tip);
       setTimeout(function() { tip.classList.add('show'); }, 800);
-      // 9 秒倒计时自动消失
+      // 2 秒自动消失
       setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 2000);
     });
     if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
@@ -686,11 +694,11 @@
         if (document.getElementById(tipId)) return;
         const tip = makeTip('点击 Safari 分享按钮 → 「添加到主屏幕」，即可像 App 一样使用');
         const okBtn = el('button', {type: 'button', class: 'pwa-tip-btn', text: '知道了'});
-        okBtn.onclick = function() { tip.remove(); };
+        okBtn.onclick = function() { localStorage.setItem('dj_pwa_ios_seen', String(Date.now())); tip.remove(); };
         tip.appendChild(okBtn);
         document.body.appendChild(tip);
         setTimeout(function() { tip.classList.add('show'); }, 100);
-        // 9 秒倒计时自动消失
+        // 2 秒自动消失
         setTimeout(function() { var t = document.getElementById(tipId); if (t) t.remove(); }, 2000);
       }, 4500);
     }
