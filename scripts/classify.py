@@ -18,7 +18,13 @@ import json
 import os
 import re
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+# 北京时间（入库日期以源站/北京时间对齐；GitHub Actions 运行在 UTC，须显式转换）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def now_beijing():
+    return datetime.now(BEIJING_TZ)
 
 # ── 可配置分类规则 ────────────────────────────────────
 MASHUP_SIZE_THRESHOLD = 100.0  # MiB，大于等于此值视为串烧（按用户要求调整）
@@ -105,7 +111,7 @@ def main():
     lang_counter = Counter()
     combo_counter = Counter()
     date_counter = Counter()
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = now_beijing().strftime("%Y-%m-%d")
     today_count = 0
 
     for t in tracks:
@@ -152,7 +158,7 @@ def main():
         "top_dates": sorted_dates[:30],
         "size_threshold_mib": MASHUP_SIZE_THRESHOLD,
         "mashup_keywords": MASHUP_KEYWORDS,
-        "generated_at": datetime.now().isoformat(),
+        "generated_at": now_beijing().isoformat(),
     }
     with open(STATS_JSON, "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=2)
