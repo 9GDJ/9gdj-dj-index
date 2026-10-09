@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261043"
+BUILD_VER = "20261044"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -1029,10 +1029,10 @@ footer {
   box-shadow: 0 4px 14px rgba(6, 182, 212, 0.45);
   filter: brightness(1.08);
 }
-/* 来源站链接（meta 上方，居中） */
+/* 来源站链接（meta 下方，居中） */
 .src-link {
   display: block; text-align: center; color: var(--accent);
-  font-size: 0.82rem; margin-bottom: 14px;
+  font-size: 0.82rem; margin-top: 16px;
 }
 .src-link:hover { text-decoration: underline; }
 
@@ -1210,7 +1210,7 @@ footer {
   .detail-meta .m { padding: 8px 10px; }
   .detail-meta .m .v { font-size: 0.8rem; }
   .detail-meta .m.dl a.track-download { font-size: 0.82rem; }
-  .src-link { font-size: 0.75rem; margin-bottom: 10px; }
+  .src-link { font-size: 0.75rem; margin-top: 12px; }
 
   /* iOS 输入框防自动放大 */
   .search-box input { font-size: 16px; }
@@ -1830,6 +1830,11 @@ def generate_js(total_tracks, page_size, latest_ids):
     const wrap = el('div', {{class: 'detail-wrap'}});
     wrap.appendChild(el('div', {{class: 'detail-title', text: t.n}}));
 
+    // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）——位于 meta 上方
+    if (typeof player !== 'undefined' && player) {{
+      player.show(t.i, t.n, t.au || '', wrap, false);
+    }}
+
     const meta = el('div', {{class: 'detail-meta'}});
     const fmtName = FORMAT_NAMES[t.f === 1 ? 1 : 0];
     const langName = LANG_NAMES[t.l === 0 ? 0 : 1];
@@ -1843,15 +1848,10 @@ def generate_js(total_tracks, page_size, latest_ids):
     const dlCell = el('div', {{class: 'm dl'}});
     dlCell.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '⬇ 下载', download: t.n}}));
     meta.appendChild(dlCell);
-
-    // 来源站链接（meta 上方，居中）
-    if (t.u) wrap.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}}));
     wrap.appendChild(meta);
 
-    // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）
-    if (typeof player !== 'undefined' && player) {{
-      player.show(t.i, t.n, t.au || '', wrap, false);
-    }}
+    // 来源站链接（meta 下方，居中）
+    if (t.u) wrap.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}}));
     m.appendChild(wrap);
     updateNav('home');
   }}
