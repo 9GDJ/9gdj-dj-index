@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261036"
+BUILD_VER = "20261043"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -310,7 +310,9 @@ main {
 }
 @media (max-width: 620px) {
   .hero-nums { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .hero-num-val { font-size: 1.2rem; }
+  .hero-num { padding: 10px 6px; border-radius: 10px; }
+  .hero-num-val { font-size: 1.15rem; }
+  .hero-num-lbl { font-size: 0.7rem; margin-top: 2px; }
 }
 
 /* ── Stats Cards（固定列数保证对称：6 / 3 / 3 / 2，均能整除 6）── */
@@ -818,10 +820,37 @@ footer {
   font-size: 0.85rem;
   color: var(--text-dim);
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
 }
 .breadcrumb a { color: var(--text-dim); }
 .breadcrumb a:hover { color: var(--accent); }
 .breadcrumb .sep { margin: 0 6px; }
+.breadcrumb-back {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 8px; padding: 4px 12px; font-size: 0.8rem; cursor: pointer;
+  margin-right: 10px; flex-shrink: 0;
+}
+.breadcrumb-back:hover { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 620px) {
+  .breadcrumb-back { min-height: 38px; padding: 4px 14px; }
+}
+
+/* ── 首页入口双按钮 ── */
+.home-links { display: flex; gap: 10px; margin-top: 16px; }
+.home-links a {
+  flex: 1; text-align: center; padding: 11px 14px;
+  border-radius: 12px; font-size: 0.88rem; font-weight: 600;
+  background: linear-gradient(180deg, rgba(24,28,35,.88), rgba(18,21,27,.92));
+  border: 1px solid rgba(255,43,214,.16); color: var(--text);
+  transition: all .18s; white-space: nowrap;
+}
+.home-links a:hover { border-color: rgba(255,43,214,.45); color: var(--accent); }
+@media (max-width: 520px) {
+  .home-links a { font-size: 0.78rem; padding: 10px 8px; }
+}
 
 /* ── 注册/登录模态框（白牌） ── */
 .auth-overlay {
@@ -944,14 +973,18 @@ footer {
 
 /* ── 曲目详情页 ── */
 .detail-wrap {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background:
+    radial-gradient(520px 180px at 8% 0%, rgba(255, 43, 214, 0.10), transparent 70%),
+    radial-gradient(520px 200px at 92% 100%, rgba(139, 92, 246, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(24, 28, 35, 0.96), rgba(14, 17, 23, 0.97));
+  border: 1px solid rgba(255, 43, 214, 0.16);
+  border-radius: 16px;
   padding: 24px 26px;
   max-width: 860px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .detail-title {
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   font-weight: 700;
   color: var(--text);
   word-break: break-all;
@@ -960,7 +993,7 @@ footer {
 }
 .detail-meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -981,34 +1014,27 @@ footer {
   color: var(--text);
   word-break: break-all;
 }
-.detail-links { margin-bottom: 20px; font-size: 0.85rem; }
-.detail-play-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  margin: 2px 0 14px; padding: 12px 30px; border: 0; border-radius: 999px;
-  cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #081018;
-  background: linear-gradient(90deg, #fbbf24, #f472b6, #8b5cf6);
-  box-shadow: 0 4px 18px rgba(139, 92, 246, .35);
-  transition: transform .15s, box-shadow .15s;
-}
-.detail-play-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(139, 92, 246, .5); }
-.detail-links a { color: var(--accent); margin-right: 14px; }
-.detail-links a.track-download {
-  display: inline-block;
+/* 下载格：与 meta 卡片同高同宽，内嵌最早的高亮渐变按钮 */
+.detail-meta .m.dl { padding: 6px; display: flex; align-items: stretch; }
+.detail-meta .m.dl a.track-download {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  width: 100%; border-radius: 8px;
   background: linear-gradient(135deg, #FF2BD6, #06b6d4);
-  color: #fff;
-  padding: 7px 18px;
-  border-radius: 9px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 3px 12px rgba(255, 43, 214, 0.35);
+  color: #fff; font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  box-shadow: 0 2px 10px rgba(255, 43, 214, 0.3);
   transition: all 0.2s ease;
-  vertical-align: middle;
 }
-.detail-links a.track-download:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 18px rgba(6, 182, 212, 0.5);
+.detail-meta .m.dl a.track-download:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.45);
   filter: brightness(1.08);
 }
+/* 来源站链接（meta 上方，居中） */
+.src-link {
+  display: block; text-align: center; color: var(--accent);
+  font-size: 0.82rem; margin-bottom: 14px;
+}
+.src-link:hover { text-decoration: underline; }
 
 /* ── 详情页内嵌波纹播放器 ── */
 .detail-player-box {
@@ -1133,8 +1159,6 @@ footer {
   .detail-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
   .detail-meta .m { padding: 8px 10px; }
   .detail-meta .m .v { font-size: 0.82rem; }
-  .detail-links { font-size: 0.78rem; }
-  .detail-links a.track-download { display: block; text-align: center; padding: 10px 14px; margin: 0 0 10px; }
   .pagination { gap: 4px; margin-top: 14px; }
   .pagination button, .pagination span { padding: 5px 8px; font-size: 0.72rem; }
   footer { font-size: 0.68rem; padding: 12px 8px 80px; }
@@ -1185,8 +1209,8 @@ footer {
   .detail-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
   .detail-meta .m { padding: 8px 10px; }
   .detail-meta .m .v { font-size: 0.8rem; }
-  .detail-links a.track-download { display: block; text-align: center; padding: 12px 14px; font-size: 0.95rem; margin: 0 0 12px; }
-  .detail-links a.back { display: inline-block; margin-bottom: 12px; }
+  .detail-meta .m.dl a.track-download { font-size: 0.82rem; }
+  .src-link { font-size: 0.75rem; margin-bottom: 10px; }
 
   /* iOS 输入框防自动放大 */
   .search-box input { font-size: 16px; }
@@ -1592,15 +1616,12 @@ def generate_js(total_tracks, page_size, latest_ids):
     m.appendChild(el('div', {{class: 'section-title', text: '最新入库'}}));
     const latest = (ALL_TRACKS || window.__LATEST__ || []).slice(0, {LATEST_ON_HOME});
     renderTrackTable(latest, m);
-    const moreLink = el('div', {{style: 'text-align:center;margin-top:16px;'}});
-    moreLink.appendChild(el('a', {{href: '?view=all', text: '查看全部 →'}}));
-    m.appendChild(moreLink);
 
-    // 日期归档入口
-    m.appendChild(el('div', {{class: 'section-title', text: '按日期归档'}}));
-    const dateLink = el('div');
-    dateLink.appendChild(el('a', {{href: '?view=dates', text: '浏览 ' + DATES.length + ' 个入库日期 →'}}));
-    m.appendChild(dateLink);
+    // 底部入口：全部曲目 / 日期归档（双按钮一行）
+    const homeLinks = el('div', {{class: 'home-links'}});
+    homeLinks.appendChild(el('a', {{href: '?view=all', text: '全部曲目'}}));
+    homeLinks.appendChild(el('a', {{href: '?view=dates', text: '日期归档 · ' + DATES.length + ' 天'}}));
+    m.appendChild(homeLinks);
 
     updateNav('home');
   }}
@@ -1795,6 +1816,9 @@ def generate_js(total_tracks, page_size, latest_ids):
     const ldx = m.querySelector('.loading');
     if (ldx) m.removeChild(ldx);
     const bc = el('div', {{class: 'breadcrumb'}});
+    const backBtn = el('button', {{type: 'button', class: 'breadcrumb-back', text: '← 返回'}});
+    backBtn.onclick = function() {{ if (window.history.length > 1) window.history.back(); else location.href = '?'; }};
+    bc.appendChild(backBtn);
     bc.appendChild(el('a', {{href: '?', text: '首页'}}));
     bc.appendChild(el('span', {{class: 'sep', text: '/'}}));
     bc.appendChild(el('span', {{text: '曲目详情'}}));
@@ -1815,12 +1839,14 @@ def generate_js(total_tracks, page_size, latest_ids):
       cell.appendChild(el('div', {{class: 'v', text: v}}));
       meta.appendChild(cell);
     }});
-    wrap.appendChild(meta);
+    // 下载格：语言后面，与 meta 卡片同高同宽
+    const dlCell = el('div', {{class: 'm dl'}});
+    dlCell.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '⬇ 下载', download: t.n}}));
+    meta.appendChild(dlCell);
 
-    const links = el('div', {{class: 'detail-links'}});
-    if (t.u) links.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}}));
-    links.appendChild(el('a', {{href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}}));
-    wrap.appendChild(links);
+    // 来源站链接（meta 上方，居中）
+    if (t.u) wrap.appendChild(el('a', {{href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}}));
+    wrap.appendChild(meta);
 
     // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）
     if (typeof player !== 'undefined' && player) {{
