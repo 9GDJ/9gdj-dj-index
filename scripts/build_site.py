@@ -18,7 +18,7 @@ import os
 import shutil
 from collections import defaultdict
 from datetime import datetime
-BUILD_VER = "20261044"
+BUILD_VER = "20261045"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -595,6 +595,10 @@ body { padding-bottom: 76px; }
   line-height: 1;
 }
 .player-close:hover { color: var(--text); }
+
+/* 详情页内嵌播放器：不展示关闭按钮与曲名（标题已展示曲名） */
+.player-inline .player-close { display: none; }
+.player-inline .player-name { display: none; }
 
 /* 适配窄屏（不破版、不遮挡） */
 @media (max-width: 860px) {
