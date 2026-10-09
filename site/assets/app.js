@@ -375,15 +375,12 @@
     m.appendChild(el('div', {class: 'section-title', text: '最新入库'}));
     const latest = (ALL_TRACKS || window.__LATEST__ || []).slice(0, 30);
     renderTrackTable(latest, m);
-    const moreLink = el('div', {style: 'text-align:center;margin-top:16px;'});
-    moreLink.appendChild(el('a', {href: '?view=all', text: '查看全部 →'}));
-    m.appendChild(moreLink);
 
-    // 日期归档入口
-    m.appendChild(el('div', {class: 'section-title', text: '按日期归档'}));
-    const dateLink = el('div');
-    dateLink.appendChild(el('a', {href: '?view=dates', text: '浏览 ' + DATES.length + ' 个入库日期 →'}));
-    m.appendChild(dateLink);
+    // 底部入口：全部曲目 / 日期归档（双按钮一行）
+    const homeLinks = el('div', {class: 'home-links'});
+    homeLinks.appendChild(el('a', {href: '?view=all', text: '全部曲目'}));
+    homeLinks.appendChild(el('a', {href: '?view=dates', text: '日期归档 · ' + DATES.length + ' 天'}));
+    m.appendChild(homeLinks);
 
     updateNav('home');
   }
@@ -578,6 +575,9 @@
     const ldx = m.querySelector('.loading');
     if (ldx) m.removeChild(ldx);
     const bc = el('div', {class: 'breadcrumb'});
+    const backBtn = el('button', {type: 'button', class: 'breadcrumb-back', text: '← 返回'});
+    backBtn.onclick = function() { if (window.history.length > 1) window.history.back(); else location.href = '?'; };
+    bc.appendChild(backBtn);
     bc.appendChild(el('a', {href: '?', text: '首页'}));
     bc.appendChild(el('span', {class: 'sep', text: '/'}));
     bc.appendChild(el('span', {text: '曲目详情'}));
@@ -598,12 +598,14 @@
       cell.appendChild(el('div', {class: 'v', text: v}));
       meta.appendChild(cell);
     });
-    wrap.appendChild(meta);
+    // 下载格：语言后面，与 meta 卡片同高同宽
+    const dlCell = el('div', {class: 'm dl'});
+    dlCell.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '⬇ 下载', download: t.n}));
+    meta.appendChild(dlCell);
 
-    const links = el('div', {class: 'detail-links'});
-    if (t.u) links.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', text: '来源站页面 ↗'}));
-    links.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '下载', download: t.n}));
-    wrap.appendChild(links);
+    // 来源站链接（meta 上方，居中）
+    if (t.u) wrap.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}));
+    wrap.appendChild(meta);
 
     // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）
     if (typeof player !== 'undefined' && player) {
