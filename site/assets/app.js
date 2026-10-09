@@ -589,6 +589,11 @@
     const wrap = el('div', {class: 'detail-wrap'});
     wrap.appendChild(el('div', {class: 'detail-title', text: t.n}));
 
+    // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）——位于 meta 上方
+    if (typeof player !== 'undefined' && player) {
+      player.show(t.i, t.n, t.au || '', wrap, false);
+    }
+
     const meta = el('div', {class: 'detail-meta'});
     const fmtName = FORMAT_NAMES[t.f === 1 ? 1 : 0];
     const langName = LANG_NAMES[t.l === 0 ? 0 : 1];
@@ -602,15 +607,10 @@
     const dlCell = el('div', {class: 'm dl'});
     dlCell.appendChild(el('a', {href: buildDlUrl(t), class: 'track-download', text: '⬇ 下载', download: t.n}));
     meta.appendChild(dlCell);
-
-    // 来源站链接（meta 上方，居中）
-    if (t.u) wrap.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}));
     wrap.appendChild(meta);
 
-    // 详情页：直接内嵌播放器（不显示播放按钮；进入即显示，点击 ▶ 播放）
-    if (typeof player !== 'undefined' && player) {
-      player.show(t.i, t.n, t.au || '', wrap, false);
-    }
+    // 来源站链接（meta 下方，居中）
+    if (t.u) wrap.appendChild(el('a', {href: t.u, target: '_blank', rel: 'noopener', class: 'src-link', text: '来源站页面 ↗'}));
     m.appendChild(wrap);
     updateNav('home');
   }
