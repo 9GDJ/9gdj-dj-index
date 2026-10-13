@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /9gdj-dj-index/data/
+Disallow: /9gdj-dj-index/?id=
+Sitemap: https://9gdj.com/9gdj-dj-index/sitemap.xml
