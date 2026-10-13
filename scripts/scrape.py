@@ -269,6 +269,35 @@ def csv_to_json():
     return len(rows)
 
 
+def rebuild_csv_from_site_json():
+    """CSV 缺失（如 .gitignore 后 Actions 全新 runner）时，从 site/data/tracks.json 重建历史数据。
+
+    站点 JSON 字段映射：i→id, n→filename, s→size_mib, t→time, u→source_url。
+    保证每日增量抓取前 CSV 始终包含全量历史，避免数据被截断为首页 50 条。
+    """
+    site_json = os.path.join(PROJECT_DIR, "site", "data", "tracks.json")
+    if os.path.exists(CSV_PATH) and os.path.getsize(CSV_PATH) > 0:
+        return 0
+    if not os.path.exists(site_json):
+        print("  [warn] CSV 缺失且无 site/data/tracks.json 可重建，将从首页重新积累")
+        return 0
+    with open(site_json, "r", encoding="utf-8") as f:
+        arr = json.load(f)
+    with open(CSV_PATH, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        w.writeheader()
+        for t in arr:
+            w.writerow({
+                "id": t.get("i", ""),
+                "source_url": t.get("u", ""),
+                "filename": t.get("n", ""),
+                "size_mib": t.get("s", ""),
+                "time": t.get("t", ""),
+            })
+    print(f"  CSV 已从 site/data/tracks.json 重建: {len(arr)} 条")
+    return len(arr)
+
+
 def main():
     parser = argparse.ArgumentParser(description="pandadj.com 列表爬虫")
     parser.add_argument("--pages", type=str, default=None,
@@ -279,6 +308,7 @@ def main():
     args = parser.parse_args()
 
     ensure_dirs()
+    rebuild_csv_from_site_json()
 
     if args.reset:
         for p in [CSV_PATH, JSON_PATH, STATE_PATH]:
@@ -307,8 +337,9 @@ def main():
             state["completed_pages"].append(1)
             save_state(state)
             print(f"  第 1 页: {len(first_page_tracks)} 条")
-        pages_to_fetch = [p for p in range(2, total_pages + 1)
-                          if p not in state["completed_pages"]]
+        # 增量窗口：每日重抓最新 3 页（新入库曲目集中在前几页），
+        # 不再依赖历史 completed_pages（全量完成后会漏掉 1 页之后的新曲目）
+        pages_to_fetch = [p for p in range(2, 4) if p <= total_pages]
 
     print(f"\n开始抓取 {len(pages_to_fetch)} 页 (并发 {args.max_workers})...")
     start_time = time.time()
