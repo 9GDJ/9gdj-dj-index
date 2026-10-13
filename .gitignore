@@ -8,12 +8,16 @@ __pycache__/
 # 大体积中间产物（每次流水线重新生成，无需提交）
 data/classified.json
 data/raw_tracks.json
-data/raw_tracks.csv
 data/size_histogram.json
+data/raw_tracks.csv
+
+# 敏感凭证（严禁入库，防 Actions git add -A 误推）
+CREDENTIALS.txt
+*.credential
+*.token
 
 # 临时/日志文件
 *.log
 build_log*.txt
 _*.py
 _*.txt
-*_tmp.py
