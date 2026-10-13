@@ -298,6 +298,27 @@ def rebuild_csv_from_site_json():
     return len(arr)
 
 
+def check_new(session):
+    """轻量检测：只抓首页，对比站点已有 id，返回新增数量（不写任何文件）。
+
+    返回 -1 表示源站请求失败（由调用方决定退出码）。
+    """
+    try:
+        tracks, _ = detect_total_pages(session)
+    except Exception as e:
+        print(f"  check-new 抓取失败: {e}")
+        return -1
+    existing = set()
+    site_json = os.path.join(PROJECT_DIR, "site", "data", "tracks.json")
+    if os.path.exists(site_json):
+        with open(site_json, "r", encoding="utf-8") as f:
+            for t in json.load(f):
+                existing.add(str(t.get("i")))
+    new_ids = [t["id"] for t in tracks if str(t["id"]) not in existing]
+    print(f"  首页 {len(tracks)} 条，已有 {len(existing)} 条，新增 {len(new_ids)} 条")
+    return len(new_ids)
+
+
 def main():
     parser = argparse.ArgumentParser(description="pandadj.com 列表爬虫")
     parser.add_argument("--pages", type=str, default=None,
@@ -305,9 +326,22 @@ def main():
     parser.add_argument("--max-workers", type=int, default=5)
     parser.add_argument("--reset", action="store_true",
                         help="清空已有数据和状态，重新开始")
+    parser.add_argument("--check-new", action="store_true",
+                        help="轻量检测模式：只抓首页对比已有 id，打印新增数量（不写文件）")
     args = parser.parse_args()
 
     ensure_dirs()
+    session = requests.Session()
+
+    # 轻量检测模式：供每小时定时任务使用（有新数据才触发完整流程）
+    if args.check_new:
+        n = check_new(session)
+        if n < 0:
+            print("check-new: 源站不可用")
+            sys.exit(1)
+        print(n)
+        return
+
     rebuild_csv_from_site_json()
 
     if args.reset:
@@ -317,7 +351,6 @@ def main():
         print("已重置状态和数据文件。")
 
     state = load_state()
-    session = requests.Session()
 
     # 确定要抓的页码
     if args.pages:
