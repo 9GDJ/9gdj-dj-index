@@ -71,6 +71,7 @@ stats = {
         'zh_mashup': combo.get(('mashup', 'zh'), 0),
         'en_single': combo.get(('single', 'en'), 0),
         'en_mashup': combo.get(('mashup', 'en'), 0),
+        'other_mashup': combo.get(('mashup', 'other'), 0),
     },
     'today': today,
     'today_count': dc.get(today, 0),
@@ -78,7 +79,7 @@ stats = {
     'latest_date': max(dc) if dc else '',
     'earliest_date': min(dc) if dc else '',
     'top_dates': sorted(dc.items(), key=lambda x: (-x[1], x[0]))[:30],
-    'size_threshold_mib': old.get('size_threshold_mib', 20.0),
+    'size_threshold_mib': old.get('size_threshold_mib', 100.0),
     'mashup_keywords': old.get('mashup_keywords', ['串烧', 'mashup', 'mixset', '连续串', '大串烧', '串烧版']),
     'generated_at': time.strftime('%Y-%m-%dT%H:%M:%S'),
 }
