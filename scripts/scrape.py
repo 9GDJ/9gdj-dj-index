@@ -334,8 +334,12 @@ def main():
     session = requests.Session()
 
     # 轻量检测模式：供每小时定时任务使用（有新数据才触发完整流程）
+    # 只输出一个数字（新增数），抑制内部 print，避免污染 GITHUB_OUTPUT
     if args.check_new:
-        n = check_new(session)
+        import contextlib, io
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            n = check_new(session)
         if n < 0:
             print("check-new: 源站不可用")
             sys.exit(1)
