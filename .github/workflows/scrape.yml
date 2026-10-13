@@ -11,6 +11,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write   # 失败时创建告警 issue
 
 concurrency:
   group: pages
