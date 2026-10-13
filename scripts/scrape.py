@@ -374,9 +374,10 @@ def main():
             state["completed_pages"].append(1)
             save_state(state)
             print(f"  第 1 页: {len(first_page_tracks)} 条")
-        # 增量窗口：每日重抓最新 3 页（新入库曲目集中在前几页），
-        # 不再依赖历史 completed_pages（全量完成后会漏掉 1 页之后的新曲目）
-        pages_to_fetch = [p for p in range(2, 4) if p <= total_pages]
+        # 增量窗口：重抓最新 5 页（约 250 条）
+        # 依据：最近 30 天源站单日入库峰值 245 条（2026-09-21），3 页(150 条)会漏掉第 4 页起的曲目
+        # 且漏抓的曲目不会再回到首页，属于永久性丢失；5 页可覆盖历史单日峰值
+        pages_to_fetch = [p for p in range(2, 6) if p <= total_pages]
 
     print(f"\n开始抓取 {len(pages_to_fetch)} 页 (并发 {args.max_workers})...")
     start_time = time.time()
