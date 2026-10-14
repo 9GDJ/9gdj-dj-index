@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """清洗：删除 filename='-' 或 size_mib 缺失/0 的项目（原子写）"""
 import json, io, os, tempfile, time
+from datetime import datetime, timezone, timedelta
+
+BEIJING_TZ = timezone(timedelta(hours=8))
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.join(os.path.dirname(SCRIPT_DIR), 'data')
@@ -81,7 +84,7 @@ stats = {
     'top_dates': sorted(dc.items(), key=lambda x: (-x[1], x[0]))[:30],
     'size_threshold_mib': old.get('size_threshold_mib', 100.0),
     'mashup_keywords': old.get('mashup_keywords', ['串烧', 'mashup', 'mixset', '连续串', '大串烧', '串烧版']),
-    'generated_at': time.strftime('%Y-%m-%dT%H:%M:%S'),
+    'generated_at': datetime.now(BEIJING_TZ).strftime('%Y-%m-%dT%H:%M:%S'),
 }
 fd, tmp = tempfile.mkstemp(dir=BASE, suffix='.tmp')
 with io.open(tmp, 'w', encoding='utf-8') as f:
