@@ -2,7 +2,7 @@ name: daily-scrape-update
 
 on:
   schedule:
-    - cron: '0 * * * *'   # 每小时检测（UTC 整点 = 北京时间整点）；有新入库才执行完整构建
+    - cron: '*/30 * * * *'   # 每 30 分钟检测（GitHub 公共仓库 schedule 触发有 40-50 分钟以上延迟，30 分钟间隔可抵消；公共仓库 Actions 免费，无成本顾虑）；有新入库才执行完整构建
   workflow_dispatch:        # 支持手动触发
   push:
     branches: [main]        # 上传文件自动触发（commit-and-push 内部提交带 [skip ci] 防死循环）
