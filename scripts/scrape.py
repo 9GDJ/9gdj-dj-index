@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-pandadj.com 公开列表页爬虫（仅元数据，不下载任何音频文件）。
+公开列表页爬虫（仅元数据，不下载任何音频文件；源站地址由环境变量/本地 .env 提供）。
 
 用法:
     python scrape.py                  # 全量抓取，自动断点续抓
@@ -29,7 +29,24 @@ import requests
 from bs4 import BeautifulSoup
 
 # ── 配置 ──────────────────────────────────────────────
-BASE_URL = "https://pandadj.com"
+def _load_base_url():
+    """源站地址：优先环境变量（GitHub Actions Secret），其次项目根 .env（本地，已被 .gitignore 排除）"""
+    url = os.environ.get("SOURCE_BASE_URL", "")
+    if not url:
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+        if os.path.isfile(env_path):
+            with open(env_path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("SOURCE_BASE_URL="):
+                        url = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        break
+    if not url:
+        print("[错误] 未配置 SOURCE_BASE_URL（请在 GitHub Secret 或项目根 .env 中设置）", file=sys.stderr)
+        sys.exit(2)
+    return url.rstrip("/")
+
+BASE_URL = _load_base_url()
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -320,7 +337,7 @@ def check_new(session):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="pandadj.com 列表爬虫")
+    parser = argparse.ArgumentParser(description="公开列表页爬虫")
     parser.add_argument("--pages", type=str, default=None,
                         help="只抓指定页码范围，如 1-3 或 5（测试用）")
     parser.add_argument("--max-workers", type=int, default=5)
