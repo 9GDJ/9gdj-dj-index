@@ -13,6 +13,7 @@ data/raw_tracks.csv
 
 # 敏感凭证（严禁入库，防 Actions git add -A 误推）
 CREDENTIALS.txt
+.env
 *.credential
 *.token
 
