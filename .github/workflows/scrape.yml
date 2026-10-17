@@ -24,6 +24,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      SOURCE_BASE_URL: ${{ secrets.SOURCE_BASE_URL }}   # 源站地址经 Secret 注入，仓库代码不含真实地址
     steps:
       - name: Checkout
         uses: actions/checkout@v4
