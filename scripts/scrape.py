@@ -23,7 +23,9 @@ import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+BEIJING_TZ = timezone(timedelta(hours=8))   # 入库时间统一按北京时间（Actions runner 默认 UTC）
 
 import requests
 from bs4 import BeautifulSoup
@@ -135,8 +137,8 @@ def parse_page(html):
         size_text = tds[4].get_text(strip=True) if len(tds) > 4 else ""
         size_mib = parse_size(size_text)
 
-        # td[5] 时间
-        time_text = tds[5].get_text(strip=True) if len(tds) > 5 else ""
+        # td[5] 时间（源站发布时间，不采用；入库时间统一为本站北京时间，保证与「入库时间」展示一致）
+        time_text = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M")
 
         tracks.append({
             "id": track_id,
