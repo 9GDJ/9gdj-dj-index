@@ -1,5 +1,5 @@
 // 9GDJ DJ 索引 — Service Worker（静态资源缓存；不拦截 /api/ 代理）
-const CACHE = '9gdj-v20261114023910';
+const CACHE = '9gdj-v20261114080922';
 const STATIC = [
   './',
   './index.html',
